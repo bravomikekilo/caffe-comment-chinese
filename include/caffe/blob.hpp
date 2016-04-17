@@ -13,7 +13,7 @@ const int kMaxBlobAxes = 32;
 
 namespace caffe {
 
-/**
+/**blob SyncedMemory 的封装 作为'层'(Layer)'网络'(Net)'求解器'(Solver) 之间的计算基本单位
  * @brief A wrapper around SyncedMemory holders serving as the basic
  *        computational unit through which Layer%s, Net%s, and Solver%s
  *        interact.
@@ -24,17 +24,17 @@ template <typename Dtype>
 class Blob {
  public:
   Blob()
-       : data_(), diff_(), count_(0), capacity_(0) {}
-
+       : data_(), diff_(), count_(0), capacity_(0) {} //blobs分为四个域 data diff count capacity
+//构造函数组
   /// @brief Deprecated; use <code>Blob(const vector<int>& shape)</code>.
   explicit Blob(const int num, const int channels, const int height,
       const int width);
-  explicit Blob(const vector<int>& shape);
-
+  explicit Blob(const vector<int>& shape); //按形状向量构造
+//函数组结束
   /// @brief Deprecated; use <code>Reshape(const vector<int>& shape)</code>.
   void Reshape(const int num, const int channels, const int height,
       const int width);
-  /**
+  /**Reshape 更改blob的维数 如有必要将分配新的内存
    * @brief Change the dimensions of the blob, allocating new memory if
    *        necessary.
    *
@@ -48,9 +48,10 @@ class Blob {
    * an error; either Net::Forward or Net::Reshape need to be called to
    * propagate the new input shape to higher layers.
    */
-  void Reshape(const vector<int>& shape);
-  void Reshape(const BlobShape& shape);
+  void Reshape(const vector<int>& shape); // 以形状向量调用
+  void Reshape(const BlobShape& shape); // 以BlobShape调用
   void ReshapeLike(const Blob& other);
+  /**shape_string 将形状属性转换为字符串 形如"a b c d (count_)" */
   inline string shape_string() const {
     ostringstream stream;
     for (int i = 0; i < shape_.size(); ++i) {
@@ -59,8 +60,10 @@ class Blob {
     stream << "(" << count_ << ")";
     return stream.str();
   }
+  /**shape() 返回形状属性(以形状向量的形式) */
   inline const vector<int>& shape() const { return shape_; }
-  /**
+
+  /**shape(int index) 返回索引指定轴的维数 如索引为负则倒着数 形如python
    * @brief Returns the dimension of the index-th axis (or the negative index-th
    *        axis from the end, if index is negative).
    *
@@ -71,10 +74,12 @@ class Blob {
   inline int shape(int index) const {
     return shape_[CanonicalAxisIndex(index)];
   }
+  /**num_axes() 返回轴数 */
   inline int num_axes() const { return shape_.size(); }
+  /**count() 返回数量 */
   inline int count() const { return count_; }
 
-  /**
+  /**count(int start_axis,int end_axis) const; 返回一个分片的容量 是一组轴的总容量
    * @brief Compute the volume of a slice; i.e., the product of dimensions
    *        among a range of axes.
    *
@@ -94,7 +99,7 @@ class Blob {
     }
     return count;
   }
-  /**
+  /**count(int start_axis) const; 返回一个分片的容量,由开始轴到最后的轴的总容量 start_axis 开始轴
    * @brief Compute the volume of a slice spanning from a particular first
    *        axis to the final axis.
    *
@@ -104,13 +109,13 @@ class Blob {
     return count(start_axis, num_axes());
   }
 
-  /**
+  /**CanonicalAxisIndex(int axis_index); 返回规范化的轴序号 -1是最后一个 同python
    * @brief Returns the 'canonical' version of a (usually) user-specified axis,
    *        allowing for negative indexing (e.g., -1 for the last axis).
    *
    * @param axis_index the axis index.
    *        If 0 <= index < num_axes(), return index.
-   *        If -num_axes <= index <= -1, return (num_axes() - (-index)),
+   *        If -num_axes <= index <= -1, return (num_axes() + index),
    *        e.g., the last axis index (num_axes() - 1) if index == -1,
    *        the second to last if index == -2, etc.
    *        Dies on out of range index.
@@ -127,7 +132,7 @@ class Blob {
     }
     return axis_index;
   }
-
+//旧函数组
   /// @brief Deprecated legacy shape accessor num: use shape(0) instead.
   inline int num() const { return LegacyShape(0); }
   /// @brief Deprecated legacy shape accessor channels: use shape(1) instead.
@@ -149,7 +154,8 @@ class Blob {
     }
     return shape(index);
   }
-
+//旧函数组
+  /**offset(..) 计算偏移地址(寻址) */
   inline int offset(const int n, const int c = 0, const int h = 0,
       const int w = 0) const {
     CHECK_GE(n, 0);
@@ -176,7 +182,7 @@ class Blob {
     }
     return offset;
   }
-  /**
+  /**CopyFrom(const Blob<Dtype>& source, bool copy_diff ,bool reshape); 拷贝函数 copy_diff reshape 决定是否拷贝diff域和进行reshape
    * @brief Copy from a source Blob.
    *
    * @param source the Blob to copy from
@@ -187,30 +193,35 @@ class Blob {
    */
   void CopyFrom(const Blob<Dtype>& source, bool copy_diff = false,
       bool reshape = false);
-
+  //
+  /**data_at data域下标取值函数 */
   inline Dtype data_at(const int n, const int c, const int h,
       const int w) const {
     return cpu_data()[offset(n, c, h, w)];
   }
 
+  /**data_at data域下标取值函数 */
   inline Dtype diff_at(const int n, const int c, const int h,
       const int w) const {
     return cpu_diff()[offset(n, c, h, w)];
   }
 
+  /**diff_at diff域下标取值函数 */
   inline Dtype data_at(const vector<int>& index) const {
     return cpu_data()[offset(index)];
   }
 
+  /**diff_at diff域下标取值函数 */
   inline Dtype diff_at(const vector<int>& index) const {
     return cpu_diff()[offset(index)];
   }
-
+  /**data() 返回data域的syncedMemory */
   inline const shared_ptr<SyncedMemory>& data() const {
     CHECK(data_);
     return data_;
   }
 
+  /**diff() 返回diff域的syncedMemory */
   inline const shared_ptr<SyncedMemory>& diff() const {
     CHECK(diff_);
     return diff_;
@@ -238,13 +249,14 @@ class Blob {
   Dtype sumsq_data() const;
   /// @brief Compute the sum of squares (L2 norm squared) of the diff.
   Dtype sumsq_diff() const;
-
+  /** scale_data(Dtype scale_factor) 按因子scale_factor 对data域内每个数据按比例缩放*/
   /// @brief Scale the blob data by a constant factor.
-  void scale_data(Dtype scale_factor);
+  void scale_data(Dtype scale_factor); 
+  /** scale_diff(Dtype scale_factor) 按因子scale_factor 对diff域内每个数据按比例缩放*/
   /// @brief Scale the blob diff by a constant factor.
-  void scale_diff(Dtype scale_factor);
+  void scale_diff(Dtype scale_factor); 
 
-  /**
+  /**ShareData(const Blob& other) 将other的data域指针指向此Blob的data域
    * @brief Set the data_ shared_ptr to point to the SyncedMemory holding the
    *        data_ of Blob other -- useful in Layer%s which simply perform a copy
    *        in their Forward pass.
@@ -253,7 +265,8 @@ class Blob {
    * shared_ptr calls its destructor when reset with the "=" operator.
    */
   void ShareData(const Blob& other);
-  /**
+
+  /**ShareDiff(const Blob& other) 将other的diff域的指针指向此Blob的diff域
    * @brief Set the diff_ shared_ptr to point to the SyncedMemory holding the
    *        diff_ of Blob other -- useful in Layer%s which simply perform a copy
    *        in their Forward pass.
@@ -263,17 +276,18 @@ class Blob {
    */
   void ShareDiff(const Blob& other);
 
+  /**ShapeEquals 判断两Blob是否同形状 */
   bool ShapeEquals(const BlobProto& other);
 
  protected:
-  shared_ptr<SyncedMemory> data_;
-  shared_ptr<SyncedMemory> diff_;
-  shared_ptr<SyncedMemory> shape_data_;
-  vector<int> shape_;
+  shared_ptr<SyncedMemory> data_; //属性 保存data域的 SyncedMemory
+  shared_ptr<SyncedMemory> diff_; //属性 保存diff域的 SyncedMemory
+  shared_ptr<SyncedMemory> shape_data_; //属性 保存形状数据(shape_data_)的 SyncedMemory
+  vector<int> shape_; //属性 形状向量
   int count_;
   int capacity_;
 
-  DISABLE_COPY_AND_ASSIGN(Blob);
+  DISABLE_COPY_AND_ASSIGN(Blob); //宏操作 取消Blob类的拷贝和赋值操作符
 };  // class Blob
 
 }  // namespace caffe

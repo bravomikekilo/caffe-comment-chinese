@@ -7,6 +7,7 @@
 
 namespace caffe {
 // CaffeMallocHost CaffeFreeHost 主机内存分配和释放 不要使用malloc 和 free
+// 在GPU和CUDA可用的情况下,CaffeMallocHost分配的是分页锁定内存(pinned),可以提升数据传输效率
 // If CUDA is available and in GPU mode, host memory will be allocated pinned,
 // using cudaMallocHost. It avoids dynamic pinning for transfers (DMA).
 // The improvement in performance seems negligible in the single GPU case,
@@ -15,7 +16,7 @@ namespace caffe {
 inline void CaffeMallocHost(void** ptr, size_t size, bool* use_cuda) {
 #ifndef CPU_ONLY
   if (Caffe::mode() == Caffe::GPU) {
-    CUDA_CHECK(cudaMallocHost(ptr, size));
+    CUDA_CHECK(cudaMallocHost(ptr, size));//调用cudaMallocHost 在主机端分配分页锁定内存(pinned)
     *use_cuda = true;
     return;
   }
@@ -36,7 +37,7 @@ inline void CaffeFreeHost(void* ptr, bool use_cuda) {
 }
 
 
-/**SyncedMemory 同步内存类 在类内管理内存分配和同步
+/**SyncedMemory 同步内存类 在类内封装内存分配和同步,非自动控制,需要手动调用同步
  * @brief Manages memory allocation and synchronization between the host (CPU)
  *        and device (GPU).
  *
@@ -53,33 +54,33 @@ class SyncedMemory {
         own_cpu_data_(false), cpu_malloc_use_cuda_(false), own_gpu_data_(false),
         gpu_device_(-1) {}
   ~SyncedMemory();
-  const void* cpu_data();
-  void set_cpu_data(void* data);
-  const void* gpu_data();
-  void set_gpu_data(void* data);
-  void* mutable_cpu_data();
-  void* mutable_gpu_data();
-  enum SyncedHead { UNINITIALIZED, HEAD_AT_CPU, HEAD_AT_GPU, SYNCED };
-  SyncedHead head() { return head_; }
-  size_t size() { return size_; }
+  const void* cpu_data(); // 返回CPU端内存指针 只读
+  void set_cpu_data(void* data); // 设置CPU端内存数据
+  const void* gpu_data(); // 返回GPU端内存指针 只读
+  void set_gpu_data(void* data); // 设置GPU端内存数据
+  void* mutable_cpu_data(); // 返回CPU端数据 读写
+  void* mutable_gpu_data(); // 返回GPU端数据 读写
+  enum SyncedHead { UNINITIALIZED, HEAD_AT_CPU, HEAD_AT_GPU, SYNCED }; //枚举 同步标志 
+  SyncedHead head() { return head_; } //返回同步标志 不能显示设置同步标志
+  size_t size() { return size_; } //返回内存大小
 
-#ifndef CPU_ONLY
-  void async_gpu_push(const cudaStream_t& stream);
+#ifndef CPU_ONLY 
+  void async_gpu_push(const cudaStream_t& stream); //异步推送数据 异步将数据由CPU端推送GPU端 需要预先同步流 要满足(head_ == HEAD_AT_CPU)否则主机线程会被终止
 #endif
 
  private:
-  void to_cpu();
-  void to_gpu();
-  void* cpu_ptr_;
-  void* gpu_ptr_;
-  size_t size_;
-  SyncedHead head_;
-  bool own_cpu_data_;
-  bool cpu_malloc_use_cuda_;
-  bool own_gpu_data_;
-  int gpu_device_;
+  void to_cpu();     //将数据向CPU端同步 CPU端超前将直接返回
+  void to_gpu();     //将数据相GPU端同步 GPU端超前将直接返回
+  void* cpu_ptr_;    //CPU端指针
+  void* gpu_ptr_;    //GPU端指针
+  size_t size_;      //属性 内存大小
+  SyncedHead head_;  //属性 同步标志
+  bool own_cpu_data_;       // 属性 是否拥有CPU端数据
+  bool cpu_malloc_use_cuda_;// 属性 CPU端数据是否是由cudaAPI(cudaMallocHost)分配
+  bool own_gpu_data_;       // 属性 是否拥有GPU端数据
+  int gpu_device_;   //内存所在设备
 
-  DISABLE_COPY_AND_ASSIGN(SyncedMemory);
+  DISABLE_COPY_AND_ASSIGN(SyncedMemory); //宏操作 取消 SyncedMemory 类的赋值和拷贝操作符
 };  // class SyncedMemory
 
 }  // namespace caffe
