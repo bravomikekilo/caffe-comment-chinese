@@ -240,13 +240,17 @@ class Blob {
   void Update();
   void FromProto(const BlobProto& proto, bool reshape = true);
   void ToProto(BlobProto* proto, bool write_diff = false) const;
-
+  /** asum_data() 计算data域中值的绝对值的和 */
   /// @brief Compute the sum of absolute values (L1 norm) of the data.
   Dtype asum_data() const;
+
+  /** asum_diff() 计算diff域中值的绝对值的和 */
   /// @brief Compute the sum of absolute values (L1 norm) of the diff.
   Dtype asum_diff() const;
+  /** sumsq_data() 计算data域中值的平方和 */
   /// @brief Compute the sum of squares (L2 norm squared) of the data.
   Dtype sumsq_data() const;
+  /** sumsq_diff() 计算diff域中值的平方和 */
   /// @brief Compute the sum of squares (L2 norm squared) of the diff.
   Dtype sumsq_diff() const;
   /** scale_data(Dtype scale_factor) 按因子scale_factor 对data域内每个数据按比例缩放*/
