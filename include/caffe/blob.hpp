@@ -14,6 +14,7 @@ const int kMaxBlobAxes = 32;
 namespace caffe {
 
 /**blob SyncedMemory 的封装 作为'层'(Layer)'网络'(Net)'求解器'(Solver) 之间的计算基本单位
+ * 此类取消了拷贝和赋值操作符
  * @brief A wrapper around SyncedMemory holders serving as the basic
  *        computational unit through which Layer%s, Net%s, and Solver%s
  *        interact.
@@ -34,7 +35,7 @@ class Blob {
   /// @brief Deprecated; use <code>Reshape(const vector<int>& shape)</code>.
   void Reshape(const int num, const int channels, const int height,
       const int width);
-  /**Reshape 更改blob的维数 如有必要将分配新的内存
+  /**Reshape 更改blob的维(轴)数和范围  如有必要将分配新的内存
    * @brief Change the dimensions of the blob, allocating new memory if
    *        necessary.
    *
@@ -49,8 +50,8 @@ class Blob {
    * propagate the new input shape to higher layers.
    */
   void Reshape(const vector<int>& shape); // 以形状向量调用
-  void Reshape(const BlobShape& shape); // 以BlobShape调用
-  void ReshapeLike(const Blob& other);
+  void Reshape(const BlobShape& shape); // 以BlobShape(由proto定义在caffe.pb.h中)调用
+  void ReshapeLike(const Blob);
   /**shape_string 将形状属性转换为字符串 形如"a b c d (count_)" */
   inline string shape_string() const {
     ostringstream stream;
@@ -227,18 +228,42 @@ class Blob {
     return diff_;
   }
 
+ //数据存取函数组
+  /** cpu_data() 返回cpu端的data域 只读*/
   const Dtype* cpu_data() const;
+
+  /** set_cpu_data() 设置cpu端data域数据*/
   void set_cpu_data(Dtype* data);
+
+  /** gpu_shape() 返回gpu端的形状向量 只读*/
   const int* gpu_shape() const;
+
+  /** gpu_data() 返回gpu端的data域 只读*/
   const Dtype* gpu_data() const;
+
+  /** cpu_diff() 返回cpu端的diff域 只读*/
   const Dtype* cpu_diff() const;
+
+  /** gpu_diff() 返回gpu端的diff域 只读*/
   const Dtype* gpu_diff() const;
+
+  /** mutable_cpu_data() 返回cpu端的data域 读写 */
   Dtype* mutable_cpu_data();
+
+  /** mutable_gpu_data() 返回gpu端的data域 读写 */
   Dtype* mutable_gpu_data();
+
+  /** mutable_cpu_diff() 返回cpu端的diff域 读写*/
   Dtype* mutable_cpu_diff();
+
+  /** mutable_gpu_diff() 返回gpu端的diff域 读写*/
   Dtype* mutable_gpu_diff();
+//函数组结束
+
   void Update();
+  /** FromProto(const BlobProto& proto,bool reshape =true) 反序列化函数 从Proto文件中读出Blob的数据 reshape 决定是否整形*/
   void FromProto(const BlobProto& proto, bool reshape = true);
+  /** ToProto(BlobProto *proto,bool write_diff = false) const; 序列化函数 将Blob数据写入Proto文件中 write_diff 决定是否写入diff域*/
   void ToProto(BlobProto* proto, bool write_diff = false) const;
   /** asum_data() 计算data域中值的绝对值的和 */
   /// @brief Compute the sum of absolute values (L1 norm) of the data.
