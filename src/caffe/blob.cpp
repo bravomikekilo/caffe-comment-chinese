@@ -489,7 +489,7 @@ void Blob<Dtype>::FromProto(const BlobProto& proto, bool reshape) {
   } else {
     CHECK(ShapeEquals(proto)) << "shape mismatch (reshape not set)";
   }
-  // copy data
+  // copy data 拷贝数据
   Dtype* data_vec = mutable_cpu_data();
   if (proto.double_data_size() > 0) {
     CHECK_EQ(count_, proto.double_data_size());
@@ -517,7 +517,7 @@ void Blob<Dtype>::FromProto(const BlobProto& proto, bool reshape) {
   }
 }
 
-/**ToProto(BlobProto* proto,bool write_diff);序列化函数,将此blob中的数据写入proto中,write_diff决定是否写入diff域 写入的是CPU端的数据 注意数据通步 */
+/**ToProto(BlobProto* proto,bool write_diff);序列化函数,将此blob中的数据写入proto中,write_diff决定是否写入diff域 写入的是CPU端的数据 注意数据同步 */
 template <>
 void Blob<double>::ToProto(BlobProto* proto, bool write_diff) const {
   proto->clear_shape();

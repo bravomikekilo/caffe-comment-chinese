@@ -1,10 +1,10 @@
 #ifndef CPU_ONLY
-#include <cuda_runtime.h>
+#include <cuda_runtime.h> //引用cuda_runtime头文件
 #endif
 #include <glog/logging.h>
 #include <stdio.h>
 
-#include <sstream>
+#include <sstream> //引用标准库字符串流 常用于格式转换
 #include <string>
 #include <vector>
 
@@ -14,6 +14,7 @@
 
 namespace caffe {
 
+/**Op 枚举 操作类型*/
 enum Op {
   copy,
   replace_cpu,
@@ -22,50 +23,50 @@ enum Op {
   replace_gpu_diff
 };
 
+/**apply_buffers 函数模板 应用缓冲区 按Op的指示应用缓冲区*/
 template<typename Dtype>
-static void apply_buffers(const vector<Blob<Dtype>*>& blobs,
-                          Dtype* buffer, size_t total_size, Op op) {
+static void apply_buffers(const vector<Blob<Dtype>*>& blobs, Dtype* buffer, size_t total_size, Op op) {
   Dtype* ptr = buffer;
   for (int i = 0; i < blobs.size(); ++i) {
     int size = blobs[i]->count();
     switch (op) {
       case copy: {
         // Init buffer to current values of blobs
-        caffe_copy(size,
-                   reinterpret_cast<const Dtype*>(blobs[i]->data()->cpu_data()),
-                   ptr);
+        caffe_copy(size, reinterpret_cast<const Dtype*>(blobs[i]->data()->cpu_data()), ptr);//高危的类型转换
         break;
       }
       case replace_cpu:
-        blobs[i]->data()->set_cpu_data(ptr);
+        blobs[i]->data()->set_cpu_data(ptr);//将blob的data域的CPU端数据指针指向缓冲区
         break;
       case replace_gpu:
-        blobs[i]->data()->set_gpu_data(ptr);
+        blobs[i]->data()->set_gpu_data(ptr);//将blob的data域的GPU端数据指针指向缓冲区
         break;
       case replace_cpu_diff:
-        blobs[i]->diff()->set_cpu_data(ptr);
+        blobs[i]->diff()->set_cpu_data(ptr);//将blob的diff域的CPU端的数据指针指向缓冲区
         break;
       case replace_gpu_diff:
-        blobs[i]->diff()->set_gpu_data(ptr);
+        blobs[i]->diff()->set_gpu_data(ptr);//将bolb的diff域的GPU端的数据指针指向缓冲区
         break;
     }
-    ptr += size;
+    ptr += size;//将指针移到数据末端
   }
   // total_size is at least one byte
-  CHECK_EQ(total_size, (ptr == buffer ? 1 : ptr - buffer));
+  CHECK_EQ(total_size, (ptr == buffer ? 1 : ptr - buffer));//检查总大小 total_size至少为一个字节
 }
 
 // Buffer size necessary to store given blobs
+// 储存blobs所需要的必要缓冲区大小
 template<typename Dtype>
 static size_t total_size(const vector<Blob<Dtype>*>& params) {
   size_t size = 0;
   for (int i = 0; i < params.size(); ++i)
     size += params[i]->count();
-  // Size have at least one byte, otherwise cudaMalloc fails if net has no
-  // learnable parameters.
+  // Size have at least one byte, otherwise cudaMalloc fails if net has no 大小至少为一字节 
+  //learnable parameters. 否则cudaMalloc会在网络无可学习参数的情况下出错
   return (size > 0) ? size : 1;
 }
 
+//Params类 的构造函数
 template<typename Dtype>
 Params<Dtype>::Params(shared_ptr<Solver<Dtype> > root_solver)
     : size_(total_size<Dtype>(root_solver->net()->learnable_params())),
@@ -73,6 +74,7 @@ Params<Dtype>::Params(shared_ptr<Solver<Dtype> > root_solver)
       diff_() {
 }
 
+//GPUParams类 的构造函数
 template<typename Dtype>
 GPUParams<Dtype>::GPUParams(shared_ptr<Solver<Dtype> > root_solver, int device)
     : Params<Dtype>(root_solver) {
@@ -98,6 +100,7 @@ GPUParams<Dtype>::GPUParams(shared_ptr<Solver<Dtype> > root_solver, int device)
 #endif
 }
 
+//GPUParams的析构函数
 template<typename Dtype>
 GPUParams<Dtype>::~GPUParams() {
 #ifndef CPU_ONLY
@@ -106,6 +109,7 @@ GPUParams<Dtype>::~GPUParams() {
 #endif
 }
 
+//GPUParams的配置函数
 template<typename Dtype>
 void GPUParams<Dtype>::configure(Solver<Dtype>* solver) const {
   const vector<Blob<Dtype>*>& net =
@@ -114,6 +118,7 @@ void GPUParams<Dtype>::configure(Solver<Dtype>* solver) const {
   apply_buffers(net, diff_, size_, replace_gpu_diff);
 }
 
+/**compute */
 void DevicePair::compute(const vector<int> devices, vector<DevicePair>* pairs) {
 #ifndef CPU_ONLY
   vector<int> remaining(devices);
@@ -197,7 +202,7 @@ void DevicePair::compute(const vector<int> devices, vector<DevicePair>* pairs) {
 }
 
 //
-
+/**P2PSync类的构造函数*/
 template<typename Dtype>
 P2PSync<Dtype>::P2PSync(shared_ptr<Solver<Dtype> > root_solver,
                         P2PSync<Dtype>* parent, const SolverParameter& param)
@@ -245,6 +250,7 @@ P2PSync<Dtype>::P2PSync(shared_ptr<Solver<Dtype> > root_solver,
 #endif
 }
 
+/**P2PSync 的析构函数*/
 template<typename Dtype>
 P2PSync<Dtype>::~P2PSync() {
 #ifndef CPU_ONLY
@@ -267,6 +273,7 @@ P2PSync<Dtype>::~P2PSync() {
 #endif
 }
 
+/**InternalThreadEntry() 实现多线程的操作*/
 template<typename Dtype>
 void P2PSync<Dtype>::InternalThreadEntry() {
   Caffe::SetDevice(solver_->param().device_id());
@@ -378,7 +385,7 @@ void P2PSync<Dtype>::on_gradients_ready() {
   }
 #endif
 }
-
+/**Prepare() P2PSync 准备*/
 template<typename Dtype>
 void P2PSync<Dtype>::Prepare(const vector<int>& gpus,
             vector<shared_ptr<P2PSync<Dtype> > >* syncs) {
@@ -393,6 +400,7 @@ void P2PSync<Dtype>::Prepare(const vector<int>& gpus,
 
   SolverParameter param(solver_->param());
 
+  //通过找到solver的祖先构建GPU树
   // Build the GPU tree by finding the parent for each solver
   for (int attempts = 0; attempts < pairs.size(); ++attempts) {
     for (int i = 1; i < pairs.size(); ++i) {
@@ -416,7 +424,7 @@ void P2PSync<Dtype>::Prepare(const vector<int>& gpus,
     }
   }
 }
-
+/**Run() 按GPU向量并行运行*/
 template<typename Dtype>
 void P2PSync<Dtype>::Run(const vector<int>& gpus) {
   vector<shared_ptr<P2PSync<Dtype> > > syncs(gpus.size());
@@ -436,8 +444,8 @@ void P2PSync<Dtype>::Run(const vector<int>& gpus) {
   }
 }
 
-INSTANTIATE_CLASS(Params);
-INSTANTIATE_CLASS(GPUParams);
-INSTANTIATE_CLASS(P2PSync);
+INSTANTIATE_CLASS(Params);   //宏操作 将模板类Params 在float double下实例化
+INSTANTIATE_CLASS(GPUParams);//宏操作 将模板类GPUParams 在float double下实例化
+INSTANTIATE_CLASS(P2PSync);  //宏操作 将模板类P2PSync 在float double下实例化
 
 }  // namespace caffe

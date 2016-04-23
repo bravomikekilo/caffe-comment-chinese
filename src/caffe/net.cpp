@@ -39,67 +39,78 @@ Net<Dtype>::Net(const string& param_file, Phase phase, const Net* root_net)
 template <typename Dtype>
 void Net<Dtype>::Init(const NetParameter& in_param) {
   CHECK(Caffe::root_solver() || root_net_)
-      << "root_net_ needs to be set for all non-root solvers";
+      << "root_net_ needs to be set for all non-root solvers";//网络必需是根网络或指明根网络
   // Set phase from the state.
-  phase_ = in_param.state().phase();
+  phase_ = in_param.state().phase(); //设置网络的相
   // Filter layers based on their include/exclude rules and
   // the current NetState.
+  // 按照现在的网络状态(NetState)和layers的包含/除去规则过滤layers
   NetParameter filtered_param;
   FilterNet(in_param, &filtered_param);
-  LOG_IF(INFO, Caffe::root_solver())
+  LOG_IF(INFO, Caffe::root_solver()) //如果是根网络 开始输出调试信息
       << "Initializing net from parameters: " << std::endl
       << filtered_param.DebugString();
   // Create a copy of filtered_param with splits added where necessary.
   NetParameter param;
   InsertSplits(filtered_param, &param);
   // Basically, build all the layers and set up their connections.
-  name_ = param.name();
-  map<string, int> blob_name_to_idx;
-  set<string> available_blobs;
-  memory_used_ = 0;
+  // 建立所有的layers并且设置它们的连接
+  name_ = param.name(); //设置网络名称
+  map<string, int> blob_name_to_idx; //声明 blob的名称的索引
+  set<string> available_blobs;       //集合 可用的blob
+  memory_used_ = 0; //初始化内存大小
   // For each layer, set up its input and output
+  //  按层数设置输入输出有关向量的大小
   bottom_vecs_.resize(param.layer_size());
   top_vecs_.resize(param.layer_size());
   bottom_id_vecs_.resize(param.layer_size());
   param_id_vecs_.resize(param.layer_size());
   top_id_vecs_.resize(param.layer_size());
   bottom_need_backward_.resize(param.layer_size());
+  //循环初始化所有层
   for (int layer_id = 0; layer_id < param.layer_size(); ++layer_id) {
     // For non-root solvers, whether this layer is shared from root_net_.
+    // 对于非根求解器，判断此层是否被根网络共享 保存在share_from_root
     bool share_from_root = !Caffe::root_solver()
         && root_net_->layers_[layer_id]->ShareInParallel();
     // Inherit phase from net if unset.
+    // 如果层的相没有设置 继承网络的相
     if (!param.layer(layer_id).has_phase()) {
       param.mutable_layer(layer_id)->set_phase(phase_);
     }
     // Setup layer.
-    const LayerParameter& layer_param = param.layer(layer_id);
+    //初始化层
+    const LayerParameter& layer_param = param.layer(layer_id);//获得层参数
+    //检查数据有效性
     if (layer_param.propagate_down_size() > 0) {
       CHECK_EQ(layer_param.propagate_down_size(),
           layer_param.bottom_size())
           << "propagate_down param must be specified "
           << "either 0 or bottom_size times ";
     }
-    if (share_from_root) {
+    if (share_from_root) { //如果是共享层
       LOG(INFO) << "Sharing layer " << layer_param.name() << " from root net";
-      layers_.push_back(root_net_->layers_[layer_id]);
-      layers_[layer_id]->SetShared(true);
+      layers_.push_back(root_net_->layers_[layer_id]);//从根网络获得层指针并压入向量
+      layers_[layer_id]->SetShared(true);             //设置层的共享标志
     } else {
-      layers_.push_back(LayerRegistry<Dtype>::CreateLayer(layer_param));
+      layers_.push_back(LayerRegistry<Dtype>::CreateLayer(layer_param));//非共享层 调用Layer_Factory的函数创建层指针并压入
     }
-    layer_names_.push_back(layer_param.name());
+    layer_names_.push_back(layer_param.name()); //将层的名称压入向量
     LOG_IF(INFO, Caffe::root_solver())
         << "Creating Layer " << layer_param.name();
-    bool need_backward = false;
+    bool need_backward = false; //初始化 是否需要后向
 
     // Figure out this layer's input and output
-    for (int bottom_id = 0; bottom_id < layer_param.bottom_size();
-         ++bottom_id) {
+    // 明确层的输入输出
+    for (int bottom_id = 0; bottom_id < layer_param.bottom_size(); ++bottom_id) {//循环加入输入blob 明确是否需要后向
       const int blob_id = AppendBottom(param, layer_id, bottom_id,
                                        &available_blobs, &blob_name_to_idx);
       // If a blob needs backward, this layer should provide it.
+      // 如果有blob需要后向 层应该提供后向
       need_backward |= blob_need_backward_[blob_id];
     }
+
+    //初始化层的输出
     int num_top = layer_param.top_size();
     for (int top_id = 0; top_id < num_top; ++top_id) {
       AppendTop(param, layer_id, top_id, &available_blobs, &blob_name_to_idx);
@@ -113,7 +124,8 @@ void Net<Dtype>::Init(const NetParameter& in_param) {
     // If the layer specifies that AutoTopBlobs() -> true and the LayerParameter
     // specified fewer than the required number (as specified by
     // ExactNumTopBlobs() or MinTopBlobs()), allocate them here.
-    Layer<Dtype>* layer = layers_[layer_id].get();
+    // 如果层的AutoTopBlobs() 为 true 而且LayerParameter说明的blob数量不足 在这里分配这些blob
+    Layer<Dtype>* layer = layers_[layer_id].get(); //由指针获得对象
     if (layer->AutoTopBlobs()) {
       const int needed_num_top =
           std::max(layer->MinTopBlobs(), layer->ExactNumTopBlobs());
@@ -125,6 +137,7 @@ void Net<Dtype>::Init(const NetParameter& in_param) {
       }
     }
     // After this layer is connected, set it up.
+    // 在类连接完成后 将其初始化
     if (share_from_root) {
       // Set up size of top blobs using root_net_
       const vector<Blob<Dtype>*>& base_top = root_net_->top_vecs_[layer_id];
@@ -172,19 +185,24 @@ void Net<Dtype>::Init(const NetParameter& in_param) {
       AppendParam(param, layer_id, param_id);
     }
     // Finally, set the backward flag
+    // 最后 设置后向的标志
     layer_need_backward_.push_back(need_backward);
     if (need_backward) {
       for (int top_id = 0; top_id < top_id_vecs_[layer_id].size(); ++top_id) {
         blob_need_backward_[top_id_vecs_[layer_id][top_id]] = true;
       }
     }
-  }
+  } //层加入完成
+
+
   // Go through the net backwards to determine which blobs contribute to the
   // loss.  We can skip backward computation for blobs that don't contribute
   // to the loss.
   // Also checks if all bottom blobs don't need backward computation (possible
   // because the skip_propagate_down param) and so we can skip bacward
   // computation for the entire layer
+  // 后向遍历网络来确定对误差有贡献的blob 我们可以跳过对误差无贡献的blob的计算
+  // 同时检查是不是所有的输入blob都不需要后向计算 如果是 那么可以跳过整个层的后向计算
   set<string> blobs_under_loss;
   set<string> blobs_skip_backp;
   for (int layer_id = layers_.size() - 1; layer_id >= 0; --layer_id) {
@@ -204,6 +222,7 @@ void Net<Dtype>::Init(const NetParameter& in_param) {
     }
     // If this layer can skip backward computation, also all his bottom blobs
     // don't need backpropagation
+    // 如果层能够跳过后向计算 那么它所有的输入blob都不需要后向传播
     if (layer_need_backward_[layer_id] && layer_skip_propagate_down) {
       layer_need_backward_[layer_id] = false;
       for (int bottom_id = 0; bottom_id < bottom_vecs_[layer_id].size();
@@ -237,6 +256,7 @@ void Net<Dtype>::Init(const NetParameter& in_param) {
     }
   }
   // Handle force_backward if needed.
+  // 如果需要的话 处理强制后向(force_backward)
   if (param.force_backward()) {
     for (int layer_id = 0; layer_id < layers_.size(); ++layer_id) {
       layer_need_backward_[layer_id] = true;
@@ -256,6 +276,7 @@ void Net<Dtype>::Init(const NetParameter& in_param) {
     }
   }
   // In the end, all remaining blobs are considered output blobs.
+  // 最后 所有剩余的blob都被认为是输出blob
   for (set<string>::iterator it = available_blobs.begin();
       it != available_blobs.end(); ++it) {
     LOG_IF(INFO, Caffe::root_solver())
@@ -412,9 +433,7 @@ void Net<Dtype>::AppendTop(const NetParameter& param, const int layer_id,
 
 // Helper for Net::Init: add a new bottom blob to the net.
 template <typename Dtype>
-int Net<Dtype>::AppendBottom(const NetParameter& param, const int layer_id,
-    const int bottom_id, set<string>* available_blobs,
-    map<string, int>* blob_name_to_idx) {
+int Net<Dtype>::AppendBottom(const NetParameter& param, const int layer_id, const int bottom_id, set<string>* available_blobs, map<string, int>* blob_name_to_idx) {
   const LayerParameter& layer_param = param.layer(layer_id);
   const string& blob_name = layer_param.bottom(bottom_id);
   if (available_blobs->find(blob_name) == available_blobs->end()) {

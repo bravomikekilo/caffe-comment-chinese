@@ -22,6 +22,7 @@ SyncedMemory::~SyncedMemory() {
 #endif  // CPU_ONLY
 }
 
+/**to_cpu() 将数据向CPU同步 将head_ 设为HEAD_AT_CPU*/
 inline void SyncedMemory::to_cpu() {
   switch (head_) {
   case UNINITIALIZED:
@@ -47,7 +48,7 @@ inline void SyncedMemory::to_cpu() {
     break;
   }
 }
-
+/**to_gpu() 将数据向GPU同步 将head_ 设为 HEAD_AT_GPU*/
 inline void SyncedMemory::to_gpu() {
 #ifndef CPU_ONLY
   switch (head_) {
@@ -76,11 +77,12 @@ inline void SyncedMemory::to_gpu() {
 #endif
 }
 
+/**cpu_data() 返回CPU端数据指针 只读 不变动head_状态*/
 const void* SyncedMemory::cpu_data() {
   to_cpu();
   return (const void*)cpu_ptr_;
 }
-
+/**set_cpu_data() 设置CPU端数据指针 将指针设置到data 将head_ 设为CPU*/
 void SyncedMemory::set_cpu_data(void* data) {
   CHECK(data);
   if (own_cpu_data_) {
@@ -91,6 +93,7 @@ void SyncedMemory::set_cpu_data(void* data) {
   own_cpu_data_ = false;
 }
 
+/**gpu_data() 返回GPU端数数据指针 只读 不变动head_状态*/
 const void* SyncedMemory::gpu_data() {
 #ifndef CPU_ONLY
   to_gpu();
@@ -101,6 +104,7 @@ const void* SyncedMemory::gpu_data() {
 #endif
 }
 
+/**set_gpu_data() 设置GPU端数据指针 将指针设置到data 将head_ 设为GPU*/
 void SyncedMemory::set_gpu_data(void* data) {
 #ifndef CPU_ONLY
   CHECK(data);
@@ -121,12 +125,14 @@ void SyncedMemory::set_gpu_data(void* data) {
 #endif
 }
 
+/**mutable_cpu_data() 返回CPU端数据指针 读写 将head_ 设为CPU*/
 void* SyncedMemory::mutable_cpu_data() {
   to_cpu();
   head_ = HEAD_AT_CPU;
   return cpu_ptr_;
 }
 
+/**mutable_gpu_data() 返回GPU端数据指针 读写 将head_ 设为GPU*/
 void* SyncedMemory::mutable_gpu_data() {
 #ifndef CPU_ONLY
   to_gpu();
@@ -139,6 +145,8 @@ void* SyncedMemory::mutable_gpu_data() {
 }
 
 #ifndef CPU_ONLY
+
+/**async_gpu_push() 异步推送数据到GPU 需要预先同步流 要满足(head_ = HEAD_AT_CPU)否则主机线程将被终止 将head_ 设置为SYNCED*/
 void SyncedMemory::async_gpu_push(const cudaStream_t& stream) {
   CHECK(head_ == HEAD_AT_CPU);
   if (gpu_ptr_ == NULL) {

@@ -9,9 +9,11 @@
 
 namespace caffe {
 
+/**static boost::thread_specific_ptr<Caffe> thread_instance_ 静态变量 指向线程唯一的caffe对象,一定要保证每个线程有独有的对象 */
 // Make sure each thread can have different values.
 static boost::thread_specific_ptr<Caffe> thread_instance_;
 
+/**Caffe& Caffe::Get() 获得线程独有的Caffe对象 相当于获得线程的局部资源*/
 Caffe& Caffe::Get() {
   if (!thread_instance_.get()) {
     thread_instance_.reset(new Caffe());
@@ -19,7 +21,7 @@ Caffe& Caffe::Get() {
   return *(thread_instance_.get());
 }
 
-// random seeding
+//集群随机数产生 UNIX系操作系统 用系统熵池产生真随机数 
 int64_t cluster_seedgen(void) {
   int64_t s, seed, pid;
   FILE* f = fopen("/dev/urandom", "rb");
@@ -39,17 +41,18 @@ int64_t cluster_seedgen(void) {
   return seed;
 }
 
-
+/**GlobalInit() 全局初始化函数 初始化gflags 和 glog*/
 void GlobalInit(int* pargc, char*** pargv) {
   // Google flags.
   ::gflags::ParseCommandLineFlags(pargc, pargv, true);
   // Google logging.
   ::google::InitGoogleLogging(*(pargv)[0]);
   // Provide a backtrace on segfault.
+  // 为段错误提供回溯
   ::google::InstallFailureSignalHandler();
 }
 
-#ifdef CPU_ONLY  // CPU-only Caffe.
+#ifdef CPU_ONLY  // CPU-only Caffe. CPU模式的Caffe
 
 Caffe::Caffe()
     : random_generator_(), mode_(Caffe::CPU),
@@ -102,8 +105,9 @@ void* Caffe::RNG::generator() {
   return static_cast<void*>(generator_->rng());
 }
 
-#else  // Normal GPU + CPU Caffe.
+#else  // Normal GPU + CPU Caffe. 异构的caffe
 
+/**Caffe() 异构的构造函数 获得curand cublas 的句柄 初始化随机数发生器*/
 Caffe::Caffe()
     : cublas_handle_(NULL), curand_generator_(NULL), random_generator_(),
     mode_(Caffe::CPU), solver_count_(1), root_solver_(true) {
@@ -120,7 +124,7 @@ Caffe::Caffe()
     LOG(ERROR) << "Cannot create Curand generator. Curand won't be available.";
   }
 }
-
+/**~Caffe() 析构函数 释放句柄*/
 Caffe::~Caffe() {
   if (cublas_handle_) CUBLAS_CHECK(cublasDestroy(cublas_handle_));
   if (curand_generator_) {
@@ -128,6 +132,7 @@ Caffe::~Caffe() {
   }
 }
 
+/**set_random_seed() 设置随机数种子*/
 void Caffe::set_random_seed(const unsigned int seed) {
   // Curand seed
   static bool g_curand_availability_logged = false;
@@ -145,7 +150,7 @@ void Caffe::set_random_seed(const unsigned int seed) {
   // RNG seed
   Get().random_generator_.reset(new RNG(seed));
 }
-
+/**SetDevice(device_id) 唤醒(设置)设备 唤醒(设置)设备同时会重置cublas和curand*/
 void Caffe::SetDevice(const int device_id) {
   int current_device;
   CUDA_CHECK(cudaGetDevice(&current_device));
@@ -165,7 +170,7 @@ void Caffe::SetDevice(const int device_id) {
   CURAND_CHECK(curandSetPseudoRandomGeneratorSeed(Get().curand_generator_,
       cluster_seedgen()));
 }
-
+/**DeviceQuery() 设备查询打印出当前的gpu状态*/
 void Caffe::DeviceQuery() {
   cudaDeviceProp prop;
   int device;
@@ -200,7 +205,7 @@ void Caffe::DeviceQuery() {
       << (prop.kernelExecTimeoutEnabled ? "Yes" : "No");
   return;
 }
-
+/**CheckDevice(const int device_id); 返回device_id指明的设备是否可用*/
 bool Caffe::CheckDevice(const int device_id) {
   // This function checks the availability of GPU #device_id.
   // It attempts to create a context on the device by calling cudaFree(0).
@@ -222,6 +227,7 @@ bool Caffe::CheckDevice(const int device_id) {
   return r;
 }
 
+/**FindDevice(const int start_id = 0); 从start_id开始搜索设备 返回第一个可用设备的设备号*/
 int Caffe::FindDevice(const int start_id) {
   // This function finds the first available device by checking devices with
   // ordinal from start_id to the highest available value. In the
@@ -234,7 +240,7 @@ int Caffe::FindDevice(const int start_id) {
   }
   return -1;
 }
-
+/**Generator 发生器类*/
 class Caffe::RNG::Generator {
  public:
   Generator() : rng_(new caffe::rng_t(cluster_seedgen())) {}
@@ -252,11 +258,11 @@ Caffe::RNG& Caffe::RNG::operator=(const RNG& other) {
   generator_.reset(other.generator_.get());
   return *this;
 }
-
+/**generator() 返回发生器*/
 void* Caffe::RNG::generator() {
   return static_cast<void*>(generator_->rng());
 }
-
+/**cublasGetErrorString() cuBLAS 错误码转换 将错误码转换为字符串*/
 const char* cublasGetErrorString(cublasStatus_t error) {  //cuBLAS 错误码转换
   switch (error) {
   case CUBLAS_STATUS_SUCCESS:
@@ -287,6 +293,7 @@ const char* cublasGetErrorString(cublasStatus_t error) {  //cuBLAS 错误码转�
   return "Unknown cublas status";
 }
 
+/**curandGetErrorString() curand 错误码转换 将错误码转换为字符串 */
 const char* curandGetErrorString(curandStatus_t error) { //curand 错误码转换
   switch (error) {
   case CURAND_STATUS_SUCCESS:

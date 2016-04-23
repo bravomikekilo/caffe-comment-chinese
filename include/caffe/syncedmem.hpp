@@ -37,7 +37,7 @@ inline void CaffeFreeHost(void* ptr, bool use_cuda) {
 }
 
 
-/**SyncedMemory 同步内存类 在类内封装内存分配和同步,非自动控制,需要手动调用同步
+/**SyncedMemory 同步内存类 在类内封装内存分配和同步,自动控制
  * @brief Manages memory allocation and synchronization between the host (CPU)
  *        and device (GPU).
  *
@@ -54,18 +54,18 @@ class SyncedMemory {
         own_cpu_data_(false), cpu_malloc_use_cuda_(false), own_gpu_data_(false),
         gpu_device_(-1) {}
   ~SyncedMemory();
-  const void* cpu_data(); // 返回CPU端内存指针 只读
-  void set_cpu_data(void* data); // 设置CPU端内存数据
-  const void* gpu_data(); // 返回GPU端内存指针 只读
-  void set_gpu_data(void* data); // 设置GPU端内存数据
-  void* mutable_cpu_data(); // 返回CPU端数据 读写
-  void* mutable_gpu_data(); // 返回GPU端数据 读写
+  const void* cpu_data(); // 向CPU同步数据 返回CPU端内存指针 只读
+  void set_cpu_data(void* data); // 设置CPU端内存数据指针到data
+  const void* gpu_data(); // 向GPU同步数据 返回GPU端内存指针 只读
+  void set_gpu_data(void* data); // 设置GPU端内存数据指针到data
+  void* mutable_cpu_data(); // 向CPU同步数据 返回CPU端数据 读写 将head_ 设为CPU
+  void* mutable_gpu_data(); // 向GPU同步数据 返回GPU端数据 读写 将head_ 设为GPU
   enum SyncedHead { UNINITIALIZED, HEAD_AT_CPU, HEAD_AT_GPU, SYNCED }; //枚举 同步标志 
   SyncedHead head() { return head_; } //返回同步标志 不能显示设置同步标志
   size_t size() { return size_; } //返回内存大小
 
 #ifndef CPU_ONLY 
-  void async_gpu_push(const cudaStream_t& stream); //异步推送数据 异步将数据由CPU端推送GPU端 需要预先同步流 要满足(head_ == HEAD_AT_CPU)否则主机线程会被终止
+  void async_gpu_push(const cudaStream_t& stream); //异步推送数据 异步将数据由CPU端推送GPU端 需要预先同步流 要满足(head_ == HEAD_AT_CPU)否则主机线程会被终止 将head_ 设置为 SYNCED
 #endif
 
  private:

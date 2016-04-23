@@ -1,4 +1,4 @@
-/**
+/**一个层工厂 用来注册层
  * @brief A layer factory that allows one to register layers.
  * During runtime, registered layers could be called by passing a LayerParameter
  * protobuffer to the CreateLayer function:
@@ -55,7 +55,7 @@ class Layer;
 template <typename Dtype>
 class LayerRegistry {
  public:
-  typedef shared_ptr<Layer<Dtype> > (*Creator)(const LayerParameter&);
+  typedef shared_ptr<Layer<Dtype>> (*Creator)(const LayerParameter&);
   typedef std::map<string, Creator> CreatorRegistry;
 
   static CreatorRegistry& Registry() {
