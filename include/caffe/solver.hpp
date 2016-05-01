@@ -41,7 +41,11 @@ template <typename Dtype>
 class Solver {
  public:
   //构造函数组
+<<<<<<< HEAD
   explicit Solver(const SolverParameter& param, const Solver* root_solver = NULL);
+=======
+  explicit Solver(const SolverParameter& param, const Solver* root_solver = NULL); 
+>>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
   explicit Solver(const string& param_file, const Solver* root_solver = NULL);
   //函数组结束
   /**Init(const SolverParameter& param); 初始化函数 初始化求解器 SolverParameter 在caffe/proto/caffe.bp.h中定义*/
@@ -61,8 +65,11 @@ class Solver {
   /**Solve()  求解器函数的主入口*/
   // The main entry of the solver function. In default, iter will be zero. Pass
   // in a non-zero iter number to resume training for a pre-trained net.
+<<<<<<< HEAD
   // 求解器函数的主入口 默认，迭代次数是0 为一个预训练过的网络传入一个非零的迭代次数
   // 只有根求解器才能调用Solve()函数
+=======
+>>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
   virtual void Solve(const char* resume_file = NULL);
   inline void Solve(const string resume_file) { Solve(resume_file.c_str()); }
   void Step(int iters);
@@ -86,7 +93,11 @@ class Solver {
   inline const vector<shared_ptr<Net<Dtype> > >& test_nets() {
     return test_nets_;
   }
+<<<<<<< HEAD
   /**iter() 返回迭代次数*/
+=======
+  /**iter() 返回迭代状态*/
+>>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
   int iter() { return iter_; }
 
   //Callback 回调类 在迭代的一个特定的点调用
@@ -104,7 +115,10 @@ class Solver {
     callbacks_.push_back(value);
   }
 
+<<<<<<< HEAD
   //检查快照是否可以写入
+=======
+>>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
   void CheckSnapshotWritePermissions();
   /**type() 返回求解器的类型
    * @brief Returns the solver type.
@@ -138,7 +152,11 @@ class Solver {
   vector<Dtype> losses_;        //属性 误差向量
   Dtype smoothed_loss_;         //属性 平滑的误差
 
+<<<<<<< HEAD
 
+=======
+  
+>>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
   // The root solver that holds root nets (actually containing shared layers)
   // in data parallelism
   const Solver* const root_solver_;//属性 指向根求解器的指针

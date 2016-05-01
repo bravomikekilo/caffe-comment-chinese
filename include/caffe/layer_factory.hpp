@@ -55,15 +55,26 @@ class Layer;
 template <typename Dtype>
 class LayerRegistry {
  public:
+<<<<<<< HEAD
   typedef shared_ptr<Layer<Dtype>> (*Creator)(const LayerParameter&);// Creator 用层参数生成层的函数指针
   typedef std::map<string, Creator> CreatorRegistry;                 // 关系数组 Creator的登记字典
 
   static CreatorRegistry& Registry() { //Registry 注册函数 静态方法 生成一个Creator的登记字典
+=======
+  typedef shared_ptr<Layer<Dtype>> (*Creator)(const LayerParameter&);
+  typedef std::map<string, Creator> CreatorRegistry;
+
+  static CreatorRegistry& Registry() {
+>>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
     static CreatorRegistry* g_registry_ = new CreatorRegistry();
     return *g_registry_;
   }
 
+<<<<<<< HEAD
   // Adds a creator. 向登记字典中加入一个 creator
+=======
+  // Adds a creator.
+>>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
   static void AddCreator(const string& type, Creator creator) {
     CreatorRegistry& registry = Registry();
     CHECK_EQ(registry.count(type), 0)
@@ -71,7 +82,11 @@ class LayerRegistry {
     registry[type] = creator;
   }
 
+<<<<<<< HEAD
   // Get a layer using a LayerParameter. 由层参数获得一个层的指针
+=======
+  // Get a layer using a LayerParameter.
+>>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
   static shared_ptr<Layer<Dtype> > CreateLayer(const LayerParameter& param) {
     if (Caffe::root_solver()) {
       LOG(INFO) << "Creating layer " << param.name();
@@ -79,11 +94,18 @@ class LayerRegistry {
     const string& type = param.type();
     CreatorRegistry& registry = Registry();
     CHECK_EQ(registry.count(type), 1) << "Unknown layer type: " << type
+<<<<<<< HEAD
         << " (known types: " << LayerTypeListString() << ")"; // 未知的层类型 打印所有已知层类型
     return registry[type](param); // 调用层类型对应的Creator来生成层的指针
   }
   
   // 静态方法 输出包含(登记字典中所有的层的类型的)向量
+=======
+        << " (known types: " << LayerTypeListString() << ")";
+    return registry[type](param);
+  }
+
+>>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
   static vector<string> LayerTypeList() {
     CreatorRegistry& registry = Registry();
     vector<string> layer_types;
@@ -96,10 +118,17 @@ class LayerRegistry {
 
  private:
   // Layer registry should never be instantiated - everything is done with its
+<<<<<<< HEAD
   // static variables. 私有的构造函数 单例类的构造模式
   LayerRegistry() {}
   // 将包含层类型的向量转化成字符串
   static string LayerTypeListString() { 
+=======
+  // static variables.
+  LayerRegistry() {}
+
+  static string LayerTypeListString() {
+>>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
     vector<string> layer_types = LayerTypeList();
     string layer_types_str;
     for (vector<string>::iterator iter = layer_types.begin();
@@ -113,7 +142,11 @@ class LayerRegistry {
   }
 };
 
+<<<<<<< HEAD
 // 层注册器类 构造时将层注册
+=======
+
+>>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
 template <typename Dtype>
 class LayerRegisterer {
  public:
@@ -124,7 +157,11 @@ class LayerRegisterer {
   }
 };
 
+<<<<<<< HEAD
 // 宏定义 将层注册 注意 type 不要加双引号
+=======
+
+>>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
 #define REGISTER_LAYER_CREATOR(type, creator)                                  \
   static LayerRegisterer<float> g_creator_f_##type(#type, creator<float>);     \
   static LayerRegisterer<double> g_creator_d_##type(#type, creator<double>)    \

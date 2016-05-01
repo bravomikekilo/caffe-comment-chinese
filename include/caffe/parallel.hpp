@@ -84,9 +84,15 @@ class DevicePair {
 };
 
 // Synchronous data parallelism using map-reduce between local GPUs.
+<<<<<<< HEAD
 // P2PSync 端对端同步的节点 在本地GPU之间用map-reduce实现同步的数据并行
 template<typename Dtype>
 class P2PSync : public GPUParams<Dtype>, public Solver<Dtype>::Callback, public InternalThread { //多重继承
+=======
+// P2PSync 端对端同步 在本地GPU之间用map-reduce实现同步的数据并行 
+template<typename Dtype>
+class P2PSync : public GPUParams<Dtype>, public Solver<Dtype>::Callback, public InternalThread { //多重继承 
+>>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
  public:
   explicit P2PSync(shared_ptr<Solver<Dtype>> root_solver, P2PSync<Dtype>* parent, const SolverParameter& param);
   virtual ~P2PSync();

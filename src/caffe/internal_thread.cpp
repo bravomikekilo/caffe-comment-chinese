@@ -31,12 +31,19 @@ void InternalThread::StartInternalThread() {
   Caffe::Brew mode = Caffe::mode();        //获得当前Caffe模式
   int rand_seed = caffe_rng_rand();        //获得随机数种子(rand_seed)
   int solver_count = Caffe::solver_count();//获得当前solver_count
+<<<<<<< HEAD
   bool root_solver = Caffe::root_solver(); //获得当前root_solver
+=======
+  bool root_solver = Caffe::root_solver(); //获得当前root_solver 
+>>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
 //调用boost库启动线程
   try {
     thread_.reset(new boost::thread(&InternalThread::entry, this, device, mode,
           rand_seed, solver_count, root_solver));
+<<<<<<< HEAD
           // 注意 this 指针在类方法调用时是C++ 自动加入 在这里要手动加入
+=======
+>>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
   } catch (std::exception& e) {
     LOG(FATAL) << "Thread exception: " << e.what();
   }

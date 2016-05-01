@@ -133,15 +133,26 @@ class Net {
   inline const vector<string>& blob_names() const { return blob_names_; }
   /**blobs() 返回所有的blob */
   /// @brief returns the blobs
+<<<<<<< HEAD
   inline const vector<shared_ptr<Blob<Dtype>>>& blobs() const {
+=======
+  inline const vector<shared_ptr<Blob<Dtype> > >& blobs() const {
+>>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
     return blobs_;
   }
   /**layers() 返回所有的层 */
   /// @brief returns the layers
+<<<<<<< HEAD
   inline const vector<shared_ptr<Layer<Dtype>>>& layers() const {
     return layers_;
   }
   /**phase() 返回相 训练相或者测试相 */
+=======
+  inline const vector<shared_ptr<Layer<Dtype> > >& layers() const {
+    return layers_;
+  }
+  /**phase() 返回相 训练相或者测试相 */ 
+>>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
   /// @brief returns the phase: TRAIN or TEST
   inline Phase phase() const { return phase_; }
 
@@ -150,7 +161,11 @@ class Net {
    * @brief returns the bottom vecs for each layer -- usually you won't
    *        need this unless you do per-layer checks such as gradients.
    */
+<<<<<<< HEAD
   inline const vector<vector<Blob<Dtype>*>>& bottom_vecs() const {
+=======
+  inline const vector<vector<Blob<Dtype>*> >& bottom_vecs() const {
+>>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
     return bottom_vecs_;
   }
   /**top_vecs() 返回每一层的top向量
@@ -188,7 +203,11 @@ class Net {
   inline const vector<Blob<Dtype>*>& learnable_params() const {
     return learnable_params_;
   }
+<<<<<<< HEAD
   /**params_lr() 返回可学习参数的学习因子 */
+=======
+  /**params_lr() 返回可学习参数的学习因子 */ 
+>>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
   /// @brief returns the learnable parameter learning rate multipliers
   inline const vector<float>& params_lr() const { return params_lr_; }
   inline const vector<bool>& has_params_lr() const { return has_params_lr_; }
@@ -234,7 +253,11 @@ class Net {
   bool has_blob(const string& blob_name) const;
   /**blob_by_name(const string& blob_name) Blob查询 返回名字为blob_name的blob */
   const shared_ptr<Blob<Dtype> > blob_by_name(const string& blob_name) const;
+<<<<<<< HEAD
 
+=======
+  
+>>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
   /**has_layer(const string& layer_name); Layer查询 查询是否有名字为layer_name的Layer  */
   bool has_layer(const string& layer_name) const;
   /**layer_by_name(const string& layer_name); Layer查询 返回名字为layer_name的Layer */
@@ -243,7 +266,11 @@ class Net {
   void set_debug_info(const bool value) { debug_info_ = value; }
 
   // Helpers for Init.Init初始化函数的帮助函数
+<<<<<<< HEAD
   /**FilterNet(const NetParameter& param,NetParameter* param_filtered);
+=======
+  /**FilterNet(const NetParameter& param,NetParameter* param_filtered); 
+>>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
    * 将param中描述的层从param_filtered 中滤除
    * @brief Remove layers that the user specified should be excluded given the current
    *        phase, level, and stage.
@@ -288,12 +315,20 @@ class Net {
   /// @brief The phase: TRAIN or TEST
   Phase phase_; //属性 相 训练相或者测试相
   /// @brief Individual layers in the net
+<<<<<<< HEAD
   vector<shared_ptr<Layer<Dtype>>> layers_;//属性 层 储存所有层的共享指针的向量
+=======
+  vector<shared_ptr<Layer<Dtype> > > layers_;//属性 层 储存所有层的共享指针的向量
+>>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
   vector<string> layer_names_;          //属性 层的名称 储存属于此网络的所有层的名称的向量
   map<string, int> layer_names_index_;  //属性 层名称的索引 储存层的名称和向量下标的关系数组
   vector<bool> layer_need_backward_;    //属性 需要后向的层 存储是否需要后向的布尔向量
   /// @brief the blobs storing intermediate results between the layer.
+<<<<<<< HEAD
   vector<shared_ptr<Blob<Dtype>>> blobs_;//属性 blobs_ 储存中间结果的blob的向量
+=======
+  vector<shared_ptr<Blob<Dtype> > > blobs_;//属性 blobs_ 储存中间结果的blob的向量
+>>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
   vector<string> blob_names_;        //属性 blob的名称 储存所有blob的名称的向量
   map<string, int> blob_names_index_;//属性 blob的名称的索引 储存blob的名称和向量下标的关系数组
   vector<bool> blob_need_backward_;  //属性 需要后向的bolb 储存是否需要后向的布尔向量
@@ -304,6 +339,7 @@ class Net {
   vector<vector<int>> bottom_id_vecs_;
   vector<vector<bool>> bottom_need_backward_;
   /// top_vecs stores the vectors containing the output for each layer
+<<<<<<< HEAD
   vector<vector<Blob<Dtype>*>> top_vecs_;
   vector<vector<int>> top_id_vecs_;
   /// Vector of weight in the loss (or objective) function of each net blob,
@@ -313,6 +349,17 @@ class Net {
   vector<int> param_owners_;
   vector<string> param_display_names_;
   vector<pair<int, int>> param_layer_indices_;
+=======
+  vector<vector<Blob<Dtype>*> > top_vecs_;
+  vector<vector<int> > top_id_vecs_;
+  /// Vector of weight in the loss (or objective) function of each net blob,
+  /// indexed by blob_id.
+  vector<Dtype> blob_loss_weights_;
+  vector<vector<int> > param_id_vecs_;
+  vector<int> param_owners_;
+  vector<string> param_display_names_;
+  vector<pair<int, int> > param_layer_indices_;
+>>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
   map<string, int> param_names_index_;
   /// blob indices for the input and the output of the net
   vector<int> net_input_blob_indices_;
@@ -320,7 +367,11 @@ class Net {
   vector<Blob<Dtype>*> net_input_blobs_;
   vector<Blob<Dtype>*> net_output_blobs_;
   /// The parameters in the network.
+<<<<<<< HEAD
   vector<shared_ptr<Blob<Dtype>>> params_;
+=======
+  vector<shared_ptr<Blob<Dtype> > > params_;
+>>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
   vector<Blob<Dtype>*> learnable_params_;
   /**
    * The mapping from params_ -> learnable_params_: we have

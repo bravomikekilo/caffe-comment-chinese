@@ -11,17 +11,27 @@ namespace caffe {
 /**
  * @brief Optimizes the parameters of a Net using
  *        stochastic gradient descent (SGD) with momentum.
+<<<<<<< HEAD
  * 求解器的子类用带动量的SGD方法优化网络
+=======
+>>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
  */
 template <typename Dtype>
 class SGDSolver : public Solver<Dtype> {
  public:
+<<<<<<< HEAD
   // 构造函数 由参数构造或由参数文件构造
+=======
+>>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
   explicit SGDSolver(const SolverParameter& param)
       : Solver<Dtype>(param) { PreSolve(); }
   explicit SGDSolver(const string& param_file)
       : Solver<Dtype>(param_file) { PreSolve(); }
+<<<<<<< HEAD
   virtual inline const char* type() const { return "SGD"; } // 重载求解器类型为 SGD
+=======
+  virtual inline const char* type() const { return "SGD"; }
+>>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
 
   const vector<shared_ptr<Blob<Dtype> > >& history() { return history_; }
 

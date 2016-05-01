@@ -17,7 +17,10 @@ namespace caffe {
  *
  * TODO(dox): thorough documentation for Forward and proto params.
  */
+<<<<<<< HEAD
 // 数据层 基类
+=======
+>>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
 template <typename Dtype>
 class BaseDataLayer : public Layer<Dtype> {
  public:
@@ -51,7 +54,11 @@ class Batch {
  public:
   Blob<Dtype> data_, label_;
 };
+<<<<<<< HEAD
 // 预取数据数据层 基类
+=======
+
+>>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
 template <typename Dtype>
 class BasePrefetchingDataLayer :
     public BaseDataLayer<Dtype>, public InternalThread {

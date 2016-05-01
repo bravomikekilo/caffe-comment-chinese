@@ -20,15 +20,23 @@ template<typename Dtype>
 SolverAction::Enum Solver<Dtype>::GetRequestedAction() {
   if (action_request_function_) {
     // If the external request function has been set, call it.
+<<<<<<< HEAD
     // 如果外部请求的函数已经被设定 调用它
+=======
+>>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
     return action_request_function_();
   }
   return SolverAction::NONE;
 }
 
+<<<<<<< HEAD
 //求解器的构造函数
 template <typename Dtype>
 Solver<Dtype>::Solver(const Solve/rParameter& param, const Solver* root_solver)
+=======
+template <typename Dtype>
+Solver<Dtype>::Solver(const SolverParameter& param, const Solver* root_solver)
+>>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
     : net_(), callbacks_(), root_solver_(root_solver),
       requested_early_exit_(false) {
   Init(param);
@@ -43,6 +51,7 @@ Solver<Dtype>::Solver(const string& param_file, const Solver* root_solver)
   Init(param);
 }
 
+<<<<<<< HEAD
 //求解器的构造函数
 template <typename Dtype>
 void Solver<Dtype>::Init(const SolverParameter& param) {
@@ -55,6 +64,19 @@ void Solver<Dtype>::Init(const SolverParameter& param) {
   CheckSnapshotWritePermissions();    // 检查快照是否允许写入
   if (Caffe::root_solver() && param_.random_seed() >= 0) {
     Caffe::set_random_seed(param_.random_seed()); //设置随机数种子
+=======
+template <typename Dtype>
+void Solver<Dtype>::Init(const SolverParameter& param) {
+  CHECK(Caffe::root_solver() || root_solver_)
+      << "root_solver_ needs to be set for all non-root solvers";
+  LOG_IF(INFO, Caffe::root_solver()) << "Initializing solver from parameters: "
+    << std::endl << param.DebugString();
+  param_ = param;
+  CHECK_GE(param_.average_loss(), 1) << "average_loss should be non-negative.";
+  CheckSnapshotWritePermissions();
+  if (Caffe::root_solver() && param_.random_seed() >= 0) {
+    Caffe::set_random_seed(param_.random_seed());
+>>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
   }
   // Scaffolding code
   InitTrainNet();
@@ -62,11 +84,18 @@ void Solver<Dtype>::Init(const SolverParameter& param) {
     InitTestNets();
     LOG(INFO) << "Solver scaffolding done.";
   }
+<<<<<<< HEAD
   iter_ = 0; //初始化迭代次数
   current_step_ = 0;  //当前迭代步数
 }
 
 //初始化训练网络
+=======
+  iter_ = 0;
+  current_step_ = 0;
+}
+
+>>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
 template <typename Dtype>
 void Solver<Dtype>::InitTrainNet() {
   const int num_train_nets = param_.has_net() + param_.has_net_param() +
@@ -111,7 +140,11 @@ void Solver<Dtype>::InitTrainNet() {
     net_.reset(new Net<Dtype>(net_param, root_solver_->net_.get()));
   }
 }
+<<<<<<< HEAD
 // 初始化测试网络
+=======
+
+>>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
 template <typename Dtype>
 void Solver<Dtype>::InitTestNets() {
   CHECK(Caffe::root_solver());
@@ -194,6 +227,7 @@ void Solver<Dtype>::InitTestNets() {
   }
 }
 
+<<<<<<< HEAD
 // 步进 循环iters次
 template <typename Dtype>
 void Solver<Dtype>::Step(int iters) {
@@ -213,10 +247,30 @@ void Solver<Dtype>::Step(int iters) {
       if (requested_early_exit_) {
         // Break out of the while loop because stop was requested while testing.
         // 因为测试要求 跳出while循环
+=======
+template <typename Dtype>
+void Solver<Dtype>::Step(int iters) {
+  const int start_iter = iter_;
+  const int stop_iter = iter_ + iters;
+  int average_loss = this->param_.average_loss();
+  losses_.clear();
+  smoothed_loss_ = 0;
+
+  while (iter_ < stop_iter) {
+    // zero-init the params
+    net_->ClearParamDiffs();
+    if (param_.test_interval() && iter_ % param_.test_interval() == 0
+        && (iter_ > 0 || param_.test_initialization())
+        && Caffe::root_solver()) {
+      TestAll();
+      if (requested_early_exit_) {
+        // Break out of the while loop because stop was requested while testing.
+>>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
         break;
       }
     }
 
+<<<<<<< HEAD
 // 并行部分
     for (int i = 0; i < callbacks_.size(); ++i) {
       callbacks_[i]->on_start();
@@ -226,13 +280,24 @@ void Solver<Dtype>::Step(int iters) {
     net_->set_debug_info(display && param_.debug_info()); //设置是否显示
     // accumulate the loss and gradient
     // 积累误差和梯度
+=======
+    for (int i = 0; i < callbacks_.size(); ++i) {
+      callbacks_[i]->on_start();
+    }
+    const bool display = param_.display() && iter_ % param_.display() == 0;
+    net_->set_debug_info(display && param_.debug_info());
+    // accumulate the loss and gradient
+>>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
     Dtype loss = 0;
     for (int i = 0; i < param_.iter_size(); ++i) {
       loss += net_->ForwardBackward();
     }
     loss /= param_.iter_size();
     // average the loss across iterations for smoothed reporting
+<<<<<<< HEAD
     // 平均误差
+=======
+>>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
     UpdateSmoothedLoss(loss, start_iter, average_loss);
     if (display) {
       LOG_IF(INFO, Caffe::root_solver()) << "Iteration " << iter_
@@ -257,6 +322,7 @@ void Solver<Dtype>::Step(int iters) {
         }
       }
     }
+<<<<<<< HEAD
 // 并行部分
     for (int i = 0; i < callbacks_.size(); ++i) {
       callbacks_[i]->on_gradients_ready();
@@ -267,6 +333,15 @@ void Solver<Dtype>::Step(int iters) {
     // Increment the internal iter_ counter -- its value should always indicate
     // the number of times the weights have been updated.
     // iter_ 应该表示权值更新的次数
+=======
+    for (int i = 0; i < callbacks_.size(); ++i) {
+      callbacks_[i]->on_gradients_ready();
+    }
+    ApplyUpdate();
+
+    // Increment the internal iter_ counter -- its value should always indicate
+    // the number of times the weights have been updated.
+>>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
     ++iter_;
 
     SolverAction::Enum request = GetRequestedAction();
@@ -283,6 +358,7 @@ void Solver<Dtype>::Step(int iters) {
       // Break out of training loop.
       break;
     }
+<<<<<<< HEAD
   }//循环结束
 }
 
@@ -290,31 +366,58 @@ void Solver<Dtype>::Step(int iters) {
 template <typename Dtype>
 void Solver<Dtype>::Solve(const char* resume_file) {
   CHECK(Caffe::root_solver()); //检查是否是根求解器
+=======
+  }
+}
+
+template <typename Dtype>
+void Solver<Dtype>::Solve(const char* resume_file) {
+  CHECK(Caffe::root_solver());
+>>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
   LOG(INFO) << "Solving " << net_->name();
   LOG(INFO) << "Learning Rate Policy: " << param_.lr_policy();
 
   // Initialize to false every time we start solving.
+<<<<<<< HEAD
   // 每次开始求解时将是否需要提前退出设为假
+=======
+>>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
   requested_early_exit_ = false;
 
   if (resume_file) {
     LOG(INFO) << "Restoring previous solver status from " << resume_file;
+<<<<<<< HEAD
     Restore(resume_file); // 恢复之前的状态
+=======
+    Restore(resume_file);
+>>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
   }
 
   // For a network that is trained by the solver, no bottom or top vecs
   // should be given, and we will just provide dummy vecs.
   int start_iter = iter_;
+<<<<<<< HEAD
   Step(param_.max_iter() - iter_); //步进迭代
+=======
+  Step(param_.max_iter() - iter_);
+>>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
   // If we haven't already, save a snapshot after optimization, unless
   // overridden by setting snapshot_after_train := false
   if (param_.snapshot_after_train()
       && (!param_.snapshot() || iter_ % param_.snapshot() != 0)) {
+<<<<<<< HEAD
     Snapshot(); //快照
   }
   if (requested_early_exit_) {
     LOG(INFO) << "Optimization stopped early.";
     return; // 如果需要提前退出 退出
+=======
+    Snapshot();
+  }
+  if (requested_early_exit_) {
+    LOG(INFO) << "Optimization stopped early.";
+    return;
+>>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
   }
   // After the optimization is done, run an additional train and test pass to
   // display the train and test loss/outputs if appropriate (based on the
@@ -336,7 +439,11 @@ void Solver<Dtype>::Solve(const char* resume_file) {
   }
   LOG(INFO) << "Optimization Done.";
 }
+<<<<<<< HEAD
 // TestALL 测试所有测试网络
+=======
+
+>>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
 template <typename Dtype>
 void Solver<Dtype>::TestAll() {
   for (int test_net_id = 0;
@@ -346,7 +453,10 @@ void Solver<Dtype>::TestAll() {
   }
 }
 
+<<<<<<< HEAD
 // Test 测试函数
+=======
+>>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
 template <typename Dtype>
 void Solver<Dtype>::Test(const int test_net_id) {
   CHECK(Caffe::root_solver());
@@ -422,7 +532,10 @@ void Solver<Dtype>::Test(const int test_net_id) {
   }
 }
 
+<<<<<<< HEAD
 // 快照函数
+=======
+>>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
 template <typename Dtype>
 void Solver<Dtype>::Snapshot() {
   CHECK(Caffe::root_solver());
@@ -441,7 +554,10 @@ void Solver<Dtype>::Snapshot() {
   SnapshotSolverState(model_filename);
 }
 
+<<<<<<< HEAD
 // 检查快照文件是否允许写入
+=======
+>>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
 template <typename Dtype>
 void Solver<Dtype>::CheckSnapshotWritePermissions() {
   if (Caffe::root_solver() && param_.snapshot()) {
@@ -460,14 +576,20 @@ void Solver<Dtype>::CheckSnapshotWritePermissions() {
   }
 }
 
+<<<<<<< HEAD
 // 返回快照文件名 加入后缀名 extension
+=======
+>>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
 template <typename Dtype>
 string Solver<Dtype>::SnapshotFilename(const string extension) {
   return param_.snapshot_prefix() + "_iter_" + caffe::format_int(iter_)
     + extension;
 }
 
+<<<<<<< HEAD
 // 将快照写入二进制的proto文件 返回proto文件名
+=======
+>>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
 template <typename Dtype>
 string Solver<Dtype>::SnapshotToBinaryProto() {
   string model_filename = SnapshotFilename(".caffemodel");
@@ -486,7 +608,10 @@ string Solver<Dtype>::SnapshotToHDF5() {
   return model_filename;
 }
 
+<<<<<<< HEAD
 // 从快照中恢复
+=======
+>>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
 template <typename Dtype>
 void Solver<Dtype>::Restore(const char* state_file) {
   CHECK(Caffe::root_solver());
@@ -499,7 +624,10 @@ void Solver<Dtype>::Restore(const char* state_file) {
   }
 }
 
+<<<<<<< HEAD
 // 更新平滑误差
+=======
+>>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
 template <typename Dtype>
 void Solver<Dtype>::UpdateSmoothedLoss(Dtype loss, int start_iter,
     int average_loss) {

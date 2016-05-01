@@ -102,10 +102,16 @@ void Net<Dtype>::Init(const NetParameter& in_param) {
 
     // Figure out this layer's input and output
     // 明确层的输入输出
+<<<<<<< HEAD
     // 明确输入 注意第一层没有输入
     for (int bottom_id = 0; bottom_id < layer_param.bottom_size(); ++bottom_id) {//循环加入输入blob 明确是否需要后向
       const int blob_id = AppendBottom(param, layer_id, bottom_id,
                                        &available_blobs, &blob_name_to_idx);//加入输入blob
+=======
+    for (int bottom_id = 0; bottom_id < layer_param.bottom_size(); ++bottom_id) {//循环加入输入blob 明确是否需要后向
+      const int blob_id = AppendBottom(param, layer_id, bottom_id,
+                                       &available_blobs, &blob_name_to_idx);
+>>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
       // If a blob needs backward, this layer should provide it.
       // 如果有blob需要后向 层应该提供后向
       need_backward |= blob_need_backward_[blob_id];
@@ -114,7 +120,11 @@ void Net<Dtype>::Init(const NetParameter& in_param) {
     //初始化层的输出
     int num_top = layer_param.top_size();
     for (int top_id = 0; top_id < num_top; ++top_id) {
+<<<<<<< HEAD
       AppendTop(param, layer_id, top_id, &available_blobs, &blob_name_to_idx);//初始化或写入blob_need_backward_
+=======
+      AppendTop(param, layer_id, top_id, &available_blobs, &blob_name_to_idx);
+>>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
       // Collect Input layer tops as Net inputs.
       if (layer_param.type() == "Input") {
         const int blob_id = blobs_.size() - 1;
@@ -139,6 +149,7 @@ void Net<Dtype>::Init(const NetParameter& in_param) {
     }
     // After this layer is connected, set it up.
     // 在类连接完成后 将其初始化
+<<<<<<< HEAD
     if (share_from_root) { //如果从根共享
       // Set up size of top blobs using root_net_
       // 用根网络来设置输出向量的形状
@@ -146,14 +157,27 @@ void Net<Dtype>::Init(const NetParameter& in_param) {
       const vector<Blob<Dtype>*>& this_top = this->top_vecs_[layer_id];      //此网络的输出blob向量
       for (int top_id = 0; top_id < base_top.size(); ++top_id) {
         this_top[top_id]->ReshapeLike(*base_top[top_id]);        //按根网络的输出blob向量形状整形此网络的输出blob向量的形状
+=======
+    if (share_from_root) {
+      // Set up size of top blobs using root_net_
+      const vector<Blob<Dtype>*>& base_top = root_net_->top_vecs_[layer_id];
+      const vector<Blob<Dtype>*>& this_top = this->top_vecs_[layer_id];
+      for (int top_id = 0; top_id < base_top.size(); ++top_id) {
+        this_top[top_id]->ReshapeLike(*base_top[top_id]);
+>>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
         LOG(INFO) << "Created top blob " << top_id << " (shape: "
             << this_top[top_id]->shape_string() <<  ") for shared layer "
             << layer_param.name();
       }
     } else {
+<<<<<<< HEAD
       layers_[layer_id]->SetUp(bottom_vecs_[layer_id], top_vecs_[layer_id]); //调用层的初始化函数 初始化层
   }
     //循环遍历本层的输出blob 将其初始化
+=======
+      layers_[layer_id]->SetUp(bottom_vecs_[layer_id], top_vecs_[layer_id]);
+    }
+>>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
     LOG_IF(INFO, Caffe::root_solver())
         << "Setting up " << layer_names_[layer_id];
     for (int top_id = 0; top_id < top_vecs_[layer_id].size(); ++top_id) {
@@ -188,7 +212,11 @@ void Net<Dtype>::Init(const NetParameter& in_param) {
       AppendParam(param, layer_id, param_id);
     }
     // Finally, set the backward flag
+<<<<<<< HEAD
     // 最后 设置层的后向的标志
+=======
+    // 最后 设置后向的标志
+>>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
     layer_need_backward_.push_back(need_backward);
     if (need_backward) {
       for (int top_id = 0; top_id < top_id_vecs_[layer_id].size(); ++top_id) {
@@ -304,7 +332,10 @@ void Net<Dtype>::FilterNet(const NetParameter& param,
   NetState net_state(param.state());
   param_filtered->CopyFrom(param);
   param_filtered->clear_layer();
+<<<<<<< HEAD
   //循环遍历所有层
+=======
+>>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
   for (int i = 0; i < param.layer_size(); ++i) {
     const LayerParameter& layer_param = param.layer(i);
     const string& layer_name = layer_param.name();
@@ -396,7 +427,10 @@ bool Net<Dtype>::StateMeetsRule(const NetState& state,
 }
 
 // Helper for Net::Init: add a new top blob to the net.
+<<<<<<< HEAD
 // Net::Init 的帮助函数 向网络中加入一个新的输出blob
+=======
+>>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
 template <typename Dtype>
 void Net<Dtype>::AppendTop(const NetParameter& param, const int layer_id,
                            const int top_id, set<string>* available_blobs,
@@ -406,7 +440,10 @@ void Net<Dtype>::AppendTop(const NetParameter& param, const int layer_id,
   const string& blob_name = (layer_param->top_size() > top_id) ?
       layer_param->top(top_id) : "(automatic)";
   // Check if we are doing in-place computation
+<<<<<<< HEAD
   // 检查我们是否在进行原址计算
+=======
+>>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
   if (blob_name_to_idx && layer_param->bottom_size() > top_id &&
       blob_name == layer_param->bottom(top_id)) {
     // In-place computation
@@ -425,7 +462,11 @@ void Net<Dtype>::AppendTop(const NetParameter& param, const int layer_id,
     if (Caffe::root_solver()) {
       LOG(INFO) << layer_param->name() << " -> " << blob_name;
     }
+<<<<<<< HEAD
     shared_ptr<Blob<Dtype>> blob_pointer(new Blob<Dtype>());
+=======
+    shared_ptr<Blob<Dtype> > blob_pointer(new Blob<Dtype>());
+>>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
     const int blob_id = blobs_.size();
     blobs_.push_back(blob_pointer);
     blob_names_.push_back(blob_name);

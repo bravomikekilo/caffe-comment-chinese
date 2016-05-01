@@ -32,7 +32,11 @@ namespace caffe {
 template <typename Dtype>
 class Layer {
  public:
+<<<<<<< HEAD
   /**Layer 构造函数 从protcol buffer类中构造对象 不应实现自己的构造函数
+=======
+  /**Layer 构造函数 不应实现自己的构造函数
+>>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
    * You should not implement your own constructor. Any set up code should go
    * to SetUp(), where the dimensions of the bottom blobs are provided to the
    * layer.
@@ -43,7 +47,10 @@ class Layer {
       phase_ = param.phase();
       if (layer_param_.blobs_size() > 0) {
         blobs_.resize(layer_param_.blobs_size());
+<<<<<<< HEAD
         //初始化层的blob
+=======
+>>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
         for (int i = 0; i < layer_param_.blobs_size(); ++i) {
           blobs_[i].reset(new Blob<Dtype>());
           blobs_[i]->FromProto(layer_param_.blobs(i));
@@ -73,7 +80,11 @@ class Layer {
     SetLossWeights(top);          //初始化误差权重
   }
 
+<<<<<<< HEAD
   /**LayerSetUp 虚函数 通过重载完成不同层特化的初始化工作
+=======
+  /**LayerSetUp 完成不同层特化的初始化工作
+>>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
    * @brief Does layer-specific setup: your layer should implement this function
    *        as well as Reshape.
    *
@@ -91,7 +102,11 @@ class Layer {
    */
   virtual void LayerSetUp(const vector<Blob<Dtype>*>& bottom, const vector<Blob<Dtype>*>& top) {}
 
+<<<<<<< HEAD
   /**ShareInParallel 此函数说明 ‘层’ 是否为共享 默认 除数据层外 所有‘层’均不应为共享
+=======
+  /**ShareInParallel 此函数说明 ‘层’ 是否为共享 默认 除数据层外 所有‘层’均不应为共享 
+>>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
    * @brief Whether a layer should be shared by multiple nets during data
    *        parallelism. By default, all layers except for data layers should
    *        not be shared. data layers should be shared to ensure each worker
@@ -210,6 +225,7 @@ class Layer {
     loss_[top_index] = value;
   }
 
+<<<<<<< HEAD
   /**type 虚函数 返回层的类型 默认返回 空字符串""
    * @brief Returns the layer type.
    */
@@ -217,6 +233,14 @@ class Layer {
   
 // 此组函数 用来处理输入输出blobs的数量问题
   /**ExactNumBottomBlobs 层要求的准确的输入blob的数目 返回-1 如果没有准确的输入数目
+=======
+  /**type 返回层的类型 默认返回 空字符串""
+   * @brief Returns the layer type.
+   */
+  virtual inline const char* type() const { return ""; }
+// 此组函数 用来处理输入输出blobs的数量问题
+  /**ExactNumBottomBlobs 
+>>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
    * @brief Returns the exact number of bottom blobs required by the layer,
    *        or -1 if no exact number is required.
    *
@@ -224,8 +248,12 @@ class Layer {
    * layer expects some exact number of bottom blobs.
    */
   virtual inline int ExactNumBottomBlobs() const { return -1; }
+<<<<<<< HEAD
 
   /**MinBottomBlobs 最小的输入blob的数目 返回-1 如果没有最小数目限制
+=======
+  /**MinBottomBlobs
+>>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
    * @brief Returns the minimum number of bottom blobs required by the layer,
    *        or -1 if no minimum number is required.
    *
@@ -233,8 +261,12 @@ class Layer {
    * layer expects some minimum number of bottom blobs.
    */
   virtual inline int MinBottomBlobs() const { return -1; }
+<<<<<<< HEAD
 
   /**MaxBottomBlobs 最大的输入blob的数目 返回-1 如果没有最大限制
+=======
+  /**MaxBottomBlobs
+>>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
    * @brief Returns the maximum number of bottom blobs required by the layer,
    *        or -1 if no maximum number is required.
    *
@@ -242,8 +274,12 @@ class Layer {
    * layer expects some maximum number of bottom blobs.
    */
   virtual inline int MaxBottomBlobs() const { return -1; }
+<<<<<<< HEAD
 
   /**ExactNumTopBlobs() 层要求的准确的输出blob的数目 返回-1 如果没有准确的输出数目
+=======
+  /**
+>>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
    * @brief Returns the exact number of top blobs required by the layer,
    *        or -1 if no exact number is required.
    *
@@ -251,7 +287,11 @@ class Layer {
    * layer expects some exact number of top blobs.
    */
   virtual inline int ExactNumTopBlobs() const { return -1; }
+<<<<<<< HEAD
   /**MinTopBlobs() 最小的输出blob的数目 返回-1 如果没有最小数目限制
+=======
+  /**
+>>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
    * @brief Returns the minimum number of top blobs required by the layer,
    *        or -1 if no minimum number is required.
    *
@@ -259,7 +299,11 @@ class Layer {
    * layer expects some minimum number of top blobs.
    */
   virtual inline int MinTopBlobs() const { return -1; }
+<<<<<<< HEAD
   /**MaxTopBlobs() 最大输出blob的数目 返回-1 如果没有最大限制
+=======
+  /**
+>>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
    * @brief Returns the maximum number of top blobs required by the layer,
    *        or -1 if no maximum number is required.
    *
@@ -267,7 +311,11 @@ class Layer {
    * layer expects some maximum number of top blobs.
    */
   virtual inline int MaxTopBlobs() const { return -1; }
+<<<<<<< HEAD
   /**EqualNumBottomTopBlobs() 返回层是否要求输入输出blob数目相同
+=======
+  /**
+>>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
    * @brief Returns true if the layer requires an equal number of bottom and
    *        top blobs.
    *
@@ -276,7 +324,11 @@ class Layer {
    */
   virtual inline bool EqualNumBottomTopBlobs() const { return false; }
 
+<<<<<<< HEAD
   /**AutoTopBlobs 返回是否构造匿名的输出blobs
+=======
+  /**
+>>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
    * @brief Return whether "anonymous" top blobs are created automatically
    *        by the layer.
    *
@@ -511,7 +563,11 @@ inline void Layer<Dtype>::Backward(const vector<Blob<Dtype>*>& top,
   }
 }
 
+<<<<<<< HEAD
 // Serialize LayerParameter to protocol buffer 将层参数序列化到protocol buffer 类中
+=======
+// Serialize LayerParameter to protocol buffer 将层参数序列化到protocol buffer中
+>>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
 template <typename Dtype>
 void Layer<Dtype>::ToProto(LayerParameter* param, bool write_diff) {
   param->Clear();

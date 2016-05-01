@@ -7,7 +7,10 @@
 
 namespace caffe {
 // CaffeMallocHost CaffeFreeHost 主机内存分配和释放 不要使用malloc 和 free
+<<<<<<< HEAD
 // 在GPU和CUDA可用的情况下,CaffeMallocHost分配的是分页锁定内存(pinned),可以提升数据传输效率
+=======
+>>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
 // If CUDA is available and in GPU mode, host memory will be allocated pinned,
 // using cudaMallocHost. It avoids dynamic pinning for transfers (DMA).
 // The improvement in performance seems negligible in the single GPU case,
@@ -16,7 +19,11 @@ namespace caffe {
 inline void CaffeMallocHost(void** ptr, size_t size, bool* use_cuda) {
 #ifndef CPU_ONLY
   if (Caffe::mode() == Caffe::GPU) {
+<<<<<<< HEAD
     CUDA_CHECK(cudaMallocHost(ptr, size));//调用cudaMallocHost 在主机端分配分页锁定内存(pinned)
+=======
+    CUDA_CHECK(cudaMallocHost(ptr, size));
+>>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
     *use_cuda = true;
     return;
   }
@@ -37,7 +44,11 @@ inline void CaffeFreeHost(void* ptr, bool use_cuda) {
 }
 
 
+<<<<<<< HEAD
 /**SyncedMemory 同步内存类 在类内封装内存分配和同步,非自动控制,需要手动调用同步
+=======
+/**SyncedMemory 管理内存分配和同步
+>>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
  * @brief Manages memory allocation and synchronization between the host (CPU)
  *        and device (GPU).
  *
@@ -54,6 +65,7 @@ class SyncedMemory {
         own_cpu_data_(false), cpu_malloc_use_cuda_(false), own_gpu_data_(false),
         gpu_device_(-1) {}
   ~SyncedMemory();
+<<<<<<< HEAD
   const void* cpu_data(); // 返回CPU端内存指针 只读
   void set_cpu_data(void* data); // 设置CPU端内存数据
   const void* gpu_data(); // 返回GPU端内存指针 只读
@@ -81,6 +93,35 @@ class SyncedMemory {
   int gpu_device_;   //内存所在设备
 
   DISABLE_COPY_AND_ASSIGN(SyncedMemory); //宏操作 取消 SyncedMemory 类的赋值和拷贝操作符
+=======
+  const void* cpu_data();
+  void set_cpu_data(void* data);
+  const void* gpu_data();
+  void set_gpu_data(void* data);
+  void* mutable_cpu_data();
+  void* mutable_gpu_data();
+  enum SyncedHead { UNINITIALIZED, HEAD_AT_CPU, HEAD_AT_GPU, SYNCED };
+  SyncedHead head() { return head_; }
+  size_t size() { return size_; }
+
+#ifndef CPU_ONLY
+  void async_gpu_push(const cudaStream_t& stream);
+#endif
+
+ private:
+  void to_cpu();
+  void to_gpu();
+  void* cpu_ptr_;
+  void* gpu_ptr_;
+  size_t size_;
+  SyncedHead head_;
+  bool own_cpu_data_;
+  bool cpu_malloc_use_cuda_;
+  bool own_gpu_data_;
+  int gpu_device_;
+
+  DISABLE_COPY_AND_ASSIGN(SyncedMemory);
+>>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
 };  // class SyncedMemory
 
 }  // namespace caffe

@@ -32,7 +32,10 @@ static void apply_buffers(const vector<Blob<Dtype>*>& blobs, Dtype* buffer, size
     switch (op) {
       case copy: {
         // Init buffer to current values of blobs
+<<<<<<< HEAD
         // 用当前blob的值初始化缓冲区
+=======
+>>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
         caffe_copy(size, reinterpret_cast<const Dtype*>(blobs[i]->data()->cpu_data()), ptr);//高危的类型转换
         break;
       }
@@ -62,7 +65,11 @@ static size_t total_size(const vector<Blob<Dtype>*>& params) {
   size_t size = 0;
   for (int i = 0; i < params.size(); ++i)
     size += params[i]->count();
+<<<<<<< HEAD
   // Size have at least one byte, otherwise cudaMalloc fails if net has no 大小至少为一字节
+=======
+  // Size have at least one byte, otherwise cudaMalloc fails if net has no 大小至少为一字节 
+>>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
   //learnable parameters. 否则cudaMalloc会在网络无可学习参数的情况下出错
   return (size > 0) ? size : 1;
 }
@@ -89,7 +96,11 @@ GPUParams<Dtype>::GPUParams(shared_ptr<Solver<Dtype> > root_solver, int device)
 
   // Copy blob values
   const vector<Blob<Dtype>*>& net =
+<<<<<<< HEAD
       root_solver->net()->learnable_params();//从根求解器拷贝blob的值
+=======
+      root_solver->net()->learnable_params();
+>>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
   apply_buffers(net, data_, size_, copy);
 
   CUDA_CHECK(cudaMalloc(&diff_, size_ * sizeof(Dtype)));
@@ -119,7 +130,11 @@ void GPUParams<Dtype>::configure(Solver<Dtype>* solver) const {
   apply_buffers(net, diff_, size_, replace_gpu_diff);
 }
 
+<<<<<<< HEAD
 /**compute 将GPU按对排好 组织成树的形式*/
+=======
+/**compute */
+>>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
 void DevicePair::compute(const vector<int> devices, vector<DevicePair>* pairs) {
 #ifndef CPU_ONLY
   vector<int> remaining(devices);
@@ -186,10 +201,15 @@ void DevicePair::compute(const vector<int> devices, vector<DevicePair>* pairs) {
   }
 
   // Should only be the parent node remaining
+<<<<<<< HEAD
   // 经过计算配对后 将只有根节点剩余
   CHECK_EQ(remaining.size(), 1);
 
   //将根节点插入向量头
+=======
+  CHECK_EQ(remaining.size(), 1);
+
+>>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
   pairs->insert(pairs->begin(), DevicePair(-1, remaining[0]));
 
   CHECK(pairs->size() == devices.size());
@@ -209,15 +229,24 @@ void DevicePair::compute(const vector<int> devices, vector<DevicePair>* pairs) {
 template<typename Dtype>
 P2PSync<Dtype>::P2PSync(shared_ptr<Solver<Dtype> > root_solver,
                         P2PSync<Dtype>* parent, const SolverParameter& param)
+<<<<<<< HEAD
     : GPUParams<Dtype>(root_solver, param.device_id()),//在参数指定的GPU上分配缓冲区
       parent_(parent),
       children_(),
       queue_(),
       initial_iter_(root_solver->iter()),//获得起始的迭代次数
+=======
+    : GPUParams<Dtype>(root_solver, param.device_id()),
+      parent_(parent),
+      children_(),
+      queue_(),
+      initial_iter_(root_solver->iter()),
+>>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
       solver_() {
 #ifndef CPU_ONLY
   int initial_device;
   CUDA_CHECK(cudaGetDevice(&initial_device));
+<<<<<<< HEAD
   const int self = param.device_id();//获得设备号
   CUDA_CHECK(cudaSetDevice(self));   //启用设备
 
@@ -234,6 +263,23 @@ P2PSync<Dtype>::P2PSync(shared_ptr<Solver<Dtype> > root_solver,
   if (parent) {//当有祖先时
     // Enable p2p access between devices
     // 启用设备间的端对端通讯 (到祖先的通讯)
+=======
+  const int self = param.device_id();
+  CUDA_CHECK(cudaSetDevice(self));
+
+  if (parent == NULL) {
+    solver_ = root_solver;
+  } else {
+    Caffe::set_root_solver(false);
+    solver_.reset(new WorkerSolver<Dtype>(param, root_solver.get()));
+    Caffe::set_root_solver(true);
+  }
+  this->configure(solver_.get());
+  solver_->add_callback(this);
+
+  if (parent) {
+    // Enable p2p access between devices
+>>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
     const int peer = parent->solver_->param().device_id();
     int access;
     CUDA_CHECK(cudaDeviceCanAccessPeer(&access, self, peer));
@@ -243,7 +289,10 @@ P2PSync<Dtype>::P2PSync(shared_ptr<Solver<Dtype> > root_solver,
       LOG(INFO)<< "GPU " << self << " does not have p2p access to GPU " << peer;
     }
     // Allocate receiving buffer on parent
+<<<<<<< HEAD
     // 在祖先设备上分配接受缓冲
+=======
+>>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
     CUDA_CHECK(cudaSetDevice(peer));
     CUDA_CHECK(cudaMalloc(&parent_grads_, size_ * sizeof(Dtype)));
     CUDA_CHECK(cudaSetDevice(self));
@@ -283,7 +332,11 @@ template<typename Dtype>
 void P2PSync<Dtype>::InternalThreadEntry() {
   Caffe::SetDevice(solver_->param().device_id());
   CHECK(Caffe::root_solver());
+<<<<<<< HEAD
   Caffe::set_root_solver(false); //设置为子求解器
+=======
+  Caffe::set_root_solver(false);
+>>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
   // See if there is a defined seed and reset random state if so
   if (solver_->param().random_seed() >= 0) {
     // Fetch random seed and modulate by device ID to make sure
@@ -307,6 +360,7 @@ void P2PSync<Dtype>::on_start() {
 #endif
 
   // Wait for update from parent
+<<<<<<< HEAD
   // 如果有祖先 等待祖先的更新
   if (parent_) {
     P2PSync<Dtype> *parent = queue_.pop();//祖先出栈
@@ -318,6 +372,17 @@ void P2PSync<Dtype>::on_start() {
   for (int i = children_.size() - 1; i >= 0; i--) {
     Dtype* src = data_; //src源指针
     Dtype* dst = children_[i]->data_; //dst 汇指针
+=======
+  if (parent_) {
+    P2PSync<Dtype> *parent = queue_.pop();
+    CHECK(parent == parent_);
+  }
+
+  // Update children
+  for (int i = children_.size() - 1; i >= 0; i--) {
+    Dtype* src = data_;
+    Dtype* dst = children_[i]->data_;
+>>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
 
 #ifdef DEBUG
     cudaPointerAttributes attributes;
@@ -327,11 +392,18 @@ void P2PSync<Dtype>::on_start() {
     CHECK(attributes.device == children_[i]->solver_->param().device_id());
 #endif
 
+<<<<<<< HEAD
 // 拷贝并同步内存
     CUDA_CHECK(cudaMemcpyAsync(dst, src, size_ * sizeof(Dtype),
         cudaMemcpyDeviceToDevice, cudaStreamDefault));//异步数据拷贝
     CUDA_CHECK(cudaStreamSynchronize(cudaStreamDefault));//流同步
     children_[i]->queue_.push(this);      //将自己压入孩子的栈
+=======
+    CUDA_CHECK(cudaMemcpyAsync(dst, src, size_ * sizeof(Dtype),
+        cudaMemcpyDeviceToDevice, cudaStreamDefault));
+    CUDA_CHECK(cudaStreamSynchronize(cudaStreamDefault));
+    children_[i]->queue_.push(this);
+>>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
   }
 #endif
 }
@@ -346,7 +418,10 @@ void P2PSync<Dtype>::on_gradients_ready() {
 #endif
 
   // Sum children gradients as they appear in the queue
+<<<<<<< HEAD
   // 将出现在队列里的孩子的梯度求和
+=======
+>>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
   for (int i = 0; i < children_.size(); ++i) {
     P2PSync<Dtype> *child = queue_.pop();
     Dtype* src = child->parent_grads_;
@@ -366,13 +441,21 @@ void P2PSync<Dtype>::on_gradients_ready() {
     CUDA_CHECK(cudaPointerGetAttributes(&attributes, dst));
     CHECK(attributes.device == device);
 #endif
+<<<<<<< HEAD
 //  gpu端求和
+=======
+
+>>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
     caffe_gpu_add(size_, src, dst, dst);
   }
 
   // Send gradients to parent
+<<<<<<< HEAD
   // 将梯度发往祖先
   if (parent_) { //如果有祖先
+=======
+  if (parent_) {
+>>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
     Dtype* src = diff_;
     Dtype* dst = parent_grads_;
 
@@ -383,12 +466,20 @@ void P2PSync<Dtype>::on_gradients_ready() {
     CUDA_CHECK(cudaPointerGetAttributes(&attributes, dst));
     CHECK(attributes.device == parent_->solver_->param().device_id());
 #endif
+<<<<<<< HEAD
 // 数据发送
+=======
+
+>>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
     CUDA_CHECK(cudaMemcpyAsync(dst, src, size_ * sizeof(Dtype),  //
         cudaMemcpyDeviceToDevice, cudaStreamDefault));
     CUDA_CHECK(cudaStreamSynchronize(cudaStreamDefault));
     parent_->queue_.push(this);
+<<<<<<< HEAD
 } else { //如果是根求解器分解梯度
+=======
+  } else {
+>>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
     // Loss functions divide gradients by the batch size, so to compensate
     // for split batch, the root solver divides by number of solvers.
     caffe_gpu_scal(size_, Dtype(1.0 / Caffe::solver_count()), diff_);
@@ -400,17 +491,27 @@ template<typename Dtype>
 void P2PSync<Dtype>::Prepare(const vector<int>& gpus,
             vector<shared_ptr<P2PSync<Dtype> > >* syncs) {
   // Pair devices for map-reduce synchronization
+<<<<<<< HEAD
   // 为了map-reduce同步将设备结对
   vector<DevicePair> pairs;
   DevicePair::compute(gpus, &pairs);
   ostringstream s;
   //将除了根设备以外的设备按对显示输出
+=======
+  vector<DevicePair> pairs;
+  DevicePair::compute(gpus, &pairs);
+  ostringstream s;
+>>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
   for (int i = 1; i < pairs.size(); ++i) {
     s << (i == 1 ? "" : ", ") << pairs[i].parent() << ":" << pairs[i].device();
   }
   LOG(INFO)<< "GPUs pairs " << s.str();
 
+<<<<<<< HEAD
   SolverParameter param(solver_->param());//取出求解器的参数
+=======
+  SolverParameter param(solver_->param());
+>>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
 
   //通过找到solver的祖先构建GPU树
   // Build the GPU tree by finding the parent for each solver
