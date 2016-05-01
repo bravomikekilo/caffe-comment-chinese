@@ -57,24 +57,15 @@ class Solver;
 template <typename Dtype>
 class SolverRegistry {
  public:
-<<<<<<< HEAD
   typedef Solver<Dtype>* (*Creator)(const SolverParameter&);  // Creator 接受求解器参数 返回求解器(指针)的函数指针
   typedef std::map<string, Creator> CreatorRegistry; // 求解器的 Creator 的登记字典
-=======
-  typedef Solver<Dtype>* (*Creator)(const SolverParameter&);
-  typedef std::map<string, Creator> CreatorRegistry;
->>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
 
   static CreatorRegistry& Registry() {
     static CreatorRegistry* g_registry_ = new CreatorRegistry();
     return *g_registry_;
   }
 
-<<<<<<< HEAD
   // Adds a creator. 增加一个Creator
-=======
-  // Adds a creator.
->>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
   static void AddCreator(const string& type, Creator creator) {
     CreatorRegistry& registry = Registry();
     CHECK_EQ(registry.count(type), 0)
@@ -82,11 +73,7 @@ class SolverRegistry {
     registry[type] = creator;
   }
 
-<<<<<<< HEAD
   // Get a solver using a SolverParameter. 用求解器参数获得一个求解器(指针)
-=======
-  // Get a solver using a SolverParameter.
->>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
   static Solver<Dtype>* CreateSolver(const SolverParameter& param) {
     const string& type = param.type();
     CreatorRegistry& registry = Registry();
@@ -94,11 +81,8 @@ class SolverRegistry {
         << " (known types: " << SolverTypeListString() << ")";
     return registry[type](param);
   }
-<<<<<<< HEAD
   // 返回包含(登记字典中所有类型的)向量
-=======
 
->>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
   static vector<string> SolverTypeList() {
     CreatorRegistry& registry = Registry();
     vector<string> solver_types;
@@ -112,15 +96,10 @@ class SolverRegistry {
  private:
   // Solver registry should never be instantiated - everything is done with its
   // static variables.
-<<<<<<< HEAD
   // 求解器注册永远不应实例化 实现单例类的设计模式
   SolverRegistry() {}
   
   // 将包含类型的向量转换为字符串
-=======
-  SolverRegistry() {}
-
->>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
   static string SolverTypeListString() {
     vector<string> solver_types = SolverTypeList();
     string solver_types_str;
@@ -135,11 +114,7 @@ class SolverRegistry {
   }
 };
 
-<<<<<<< HEAD
 // 求解器注册器类 在构造函数中将求解器注册
-=======
-
->>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
 template <typename Dtype>
 class SolverRegisterer {
  public:
@@ -150,10 +125,7 @@ class SolverRegisterer {
   }
 };
 
-<<<<<<< HEAD
 // 宏操作 将层注册 注意 不要给类型加双引号
-=======
-
 >>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
 #define REGISTER_SOLVER_CREATOR(type, creator)                                 \
   static SolverRegisterer<float> g_creator_f_##type(#type, creator<float>);    \

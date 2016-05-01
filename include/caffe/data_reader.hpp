@@ -19,7 +19,6 @@ namespace caffe {
  * databases are read sequentially, and that each solver accesses a different
  * subset of the database. Data is distributed to solvers in a round-robin
  * way to keep parallel training deterministic.
-<<<<<<< HEAD
  * 将数据从源中读入数据层可用的队列中 一个源一个读取线程 即使是有多个求解器并行 保证数据库是串行读取的 
  */
  // 数据读取器类
@@ -30,16 +29,6 @@ class DataReader {
 
   inline BlockingQueue<Datum*>& free() const {
     return queue_pair_->free_; //队列释放
-=======
- */
-class DataReader {
- public:
-  explicit DataReader(const LayerParameter& param);
-  ~DataReader();
-
-  inline BlockingQueue<Datum*>& free() const {
-    return queue_pair_->free_;
->>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
   }
   inline BlockingQueue<Datum*>& full() const {
     return queue_pair_->full_;
@@ -47,22 +36,14 @@ class DataReader {
 
  protected:
   // Queue pairs are shared between a body and its readers
-<<<<<<< HEAD
   // 队列对 队列对是在体和它的读取器之间共享的
-=======
->>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
   class QueuePair {
    public:
     explicit QueuePair(int size);
     ~QueuePair();
 
-<<<<<<< HEAD
     BlockingQueue<Datum*> free_; // 阻塞队列 多线程传递数据用
     BlockingQueue<Datum*> full_; // 阻塞队列 多线程传递数据用
-=======
-    BlockingQueue<Datum*> free_;
-    BlockingQueue<Datum*> full_;
->>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
 
   DISABLE_COPY_AND_ASSIGN(QueuePair);
   };

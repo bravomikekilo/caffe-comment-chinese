@@ -6,18 +6,12 @@
 #include "caffe/parallel.hpp"
 #include "caffe/util/blocking_queue.hpp"
 
-<<<<<<< HEAD
 // 阻塞类的实现
 namespace caffe {
 
 template<typename T>
 // 同步体类
 // 同步体内包装了互斥体和状态变量
-=======
-namespace caffe {
-
-template<typename T>
->>>>>>> 69d9c2663b93a3129d1c8d044ef04546546955b6
 class BlockingQueue<T>::sync {
  public:
   mutable boost::mutex mutex_;
