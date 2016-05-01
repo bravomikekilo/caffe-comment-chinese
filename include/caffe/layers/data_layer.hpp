@@ -15,7 +15,7 @@
 namespace caffe {
 
 template <typename Dtype>
-class DataLayer : public BasePrefetchingDataLayer<Dtype> {
+class DataLayer : public BasePrefetchingDataLayer<Dtype> {//由预取数据数据层基类共有继承
  public:
   explicit DataLayer(const LayerParameter& param);
   virtual ~DataLayer();
@@ -26,10 +26,10 @@ class DataLayer : public BasePrefetchingDataLayer<Dtype> {
   virtual inline const char* type() const { return "Data"; }
   virtual inline int ExactNumBottomBlobs() const { return 0; }
   virtual inline int MinTopBlobs() const { return 1; }
-  virtual inline int MaxTopBlobs() const { return 2; }
+  virtual inline int MaxTopBlobs() const { return 2; } // 默认只有两个输出blob 数据和label
 
  protected:
-  virtual void load_batch(Batch<Dtype>* batch);
+  virtual void load_batch(Batch<Dtype>* batch); //加载数据
 
   DataReader reader_;
 };

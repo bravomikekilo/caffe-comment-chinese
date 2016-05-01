@@ -28,7 +28,7 @@ void BaseDataLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
   data_transformer_.reset(
       new DataTransformer<Dtype>(transform_param_, this->phase_));
   data_transformer_->InitRand();
-  // The subclasses should setup the size of bottom and top
+  // The subclasses should setup the size of bottom and top 子类应当设定 bottom 和 top的大小
   DataLayerSetUp(bottom, top);
 }
 
@@ -38,7 +38,7 @@ BasePrefetchingDataLayer<Dtype>::BasePrefetchingDataLayer(
     : BaseDataLayer<Dtype>(param),
       prefetch_free_(), prefetch_full_() {
   for (int i = 0; i < PREFETCH_COUNT; ++i) {
-    prefetch_free_.push(&prefetch_[i]);
+    prefetch_free_.push(&prefetch_[i]); // 将数据的内存指针填入待处理队列中
   }
 }
 
@@ -50,6 +50,8 @@ void BasePrefetchingDataLayer<Dtype>::LayerSetUp(
   // calls so that the prefetch thread does not accidentally make simultaneous
   // cudaMalloc calls when the main thread is running. In some GPUs this
   // seems to cause failures if we do not so.
+  // 在开始预取线程之前 我们先调用cpu_data 和 gpu_data 所以这样预取线程就不会在主进程进行时意外的同时调用cudaMalloc
+  // 这段的意义是顺序初始化内存
   for (int i = 0; i < PREFETCH_COUNT; ++i) {
     prefetch_[i].data_.mutable_cpu_data();
     if (this->output_labels_) {
@@ -68,7 +70,7 @@ void BasePrefetchingDataLayer<Dtype>::LayerSetUp(
 #endif
   DLOG(INFO) << "Initializing prefetch";
   this->data_transformer_->InitRand();
-  StartInternalThread();
+  StartInternalThread(); //启动预取线程
   DLOG(INFO) << "Prefetch initialized.";
 }
 
@@ -77,26 +79,26 @@ void BasePrefetchingDataLayer<Dtype>::InternalThreadEntry() {
 #ifndef CPU_ONLY
   cudaStream_t stream;
   if (Caffe::mode() == Caffe::GPU) {
-    CUDA_CHECK(cudaStreamCreateWithFlags(&stream, cudaStreamNonBlocking));
+    CUDA_CHECK(cudaStreamCreateWithFlags(&stream, cudaStreamNonBlocking));//创建非阻塞的cuda流
   }
 #endif
 
   try {
     while (!must_stop()) {
-      Batch<Dtype>* batch = prefetch_free_.pop();
-      load_batch(batch);
+      Batch<Dtype>* batch = prefetch_free_.pop(); //取出内存指针
+      load_batch(batch); //载入数据
 #ifndef CPU_ONLY
       if (Caffe::mode() == Caffe::GPU) {
-        batch->data_.data().get()->async_gpu_push(stream);
-        CUDA_CHECK(cudaStreamSynchronize(stream));
+        batch->data_.data().get()->async_gpu_push(stream); //异步推送数据到GPU端
+        CUDA_CHECK(cudaStreamSynchronize(stream)); //cuda流同步
       }
 #endif
-      prefetch_full_.push(batch);
+      prefetch_full_.push(batch); //将内存指针压入完成队列中
     }
   } catch (boost::thread_interrupted&) {
     // Interrupted exception is expected on shutdown
   }
-#ifndef CPU_ONLY
+#ifndef CPU_ONLY //跳出主循环后 析构 销毁流
   if (Caffe::mode() == Caffe::GPU) {
     CUDA_CHECK(cudaStreamDestroy(stream));
   }
